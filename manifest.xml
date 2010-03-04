@@ -14,7 +14,6 @@
   <depend package="dummy-dependency-n" />
 -->
 <depend package="camera_interface" />
-<depend package="dc1394" />
 <!--DEPEND-ENTRY-->
   <versioncontrol type="git" url="" />
   <export>
