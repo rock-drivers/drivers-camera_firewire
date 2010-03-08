@@ -13,7 +13,7 @@
 #include <dc1394/dc1394.h>
 #include <list>
 #include "../../camera_interface/src/CamInfoUtils.h"
-#include "./filter/frame2rggb.h"
+#include "frame2rggb.h"
 
 
 namespace camera
