@@ -13,7 +13,7 @@
   <depend package="dummy-dependency-n-1" />
   <depend package="dummy-dependency-n" />
 -->
-<depend package="camera_interface" />
+<depend package="/drivers/camera_interface" />
 <!--DEPEND-ENTRY-->
   <versioncontrol type="git" url="" />
   <export>
