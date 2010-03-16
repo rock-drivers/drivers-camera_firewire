@@ -1,5 +1,5 @@
 SET(module_name ${PROJECT_NAME})
-add_library(${PROJECT_NAME} SHARED CamFireWire.cpp filter/frame2rggb.cpp ../../camera_avt_guppy/AVT_Guppy.cpp)
+add_library(${PROJECT_NAME} SHARED CamFireWire.cpp filter/frame2rggb.cpp ../../camera_avt_guppy/src/AVT_Guppy.cpp)
 target_link_libraries(${PROJECT_NAME} rt base dc1394 camera_firewire camera_interface)
 
 install(TARGETS ${PROJECT_NAME} 
