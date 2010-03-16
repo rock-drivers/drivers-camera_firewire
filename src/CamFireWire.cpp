@@ -90,6 +90,11 @@ bool CamFireWire::open(const CamInfo &cam,const AccessMode mode)
     
     // set the current grab mode to "Stop"
     act_grab_mode_= Stop;
+    
+    dc1394_capture_setup(dc_camera,8, DC1394_CAPTURE_FLAGS_DEFAULT);
+    dc1394_video_set_transmission(dc_camera, DC1394_OFF);
+
+    
 }
 
 // returns true if the camera is open
@@ -123,8 +128,14 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
             throw std::runtime_error("Stop grabbing before switching the"
                                      " grab mode!");
         else
+	{
+	    std::cerr << "returning true...";
             return true;
+	}
     }
+
+
+
 
     // start grabbing using the given GrabMode mode
     switch (mode)
@@ -139,8 +150,11 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
     case SingleFrame:
         if (!dc_camera->one_shot_capable)
             throw std::runtime_error("Camera is not one-shot capable!");
-        dc1394_capture_setup(dc_camera,1,DC1394_CAPTURE_FLAGS_DEFAULT);
-	dc1394_video_set_one_shot(dc_camera, DC1394_ON);
+      
+	std::cerr << "setting one shot register...";
+	dc1394_camera_set_broadcast(dc_camera, DC1394_TRUE);
+	dc1394_set_control_register(dc_camera,0x61c, 0x82000000);
+	std::cerr << "done";
         break;
 	
     // grab N frames (N previously defined by setting AcquisitionFrameCount
@@ -148,9 +162,13 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
         dc1394_capture_setup(dc_camera,buffer_len,DC1394_CAPTURE_FLAGS_DEFAULT);
 	if(multi_shot_count == 0)
 	  throw std::runtime_error("Set AcquisitionFrameCount (multi-shot) to a positive number before calling grab()!");
-	dc1394_video_set_multi_shot(dc_camera, multi_shot_count, DC1394_ON);
+	//dc1394_video_set_multi_shot(dc_camera, multi_shot_count, DC1394_ON);
 	//start transmitting frames
-	dc1394_video_set_transmission(dc_camera,DC1394_ON);
+	//dc1394_video_set_transmission(dc_camera,DC1394_ON);
+	dc1394_set_control_register(dc_camera,0x614, 0);
+	std::cerr << "multi-shot count = " << multi_shot_count << std::endl;
+	dc1394_set_control_register(dc_camera,0x61c, 0x40000000 + multi_shot_count);
+
         break;
 	
     // start grabbing frames continuously (using the framerate set beforehand)
@@ -162,6 +180,8 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
         throw std::runtime_error("Unknown grab mode!");
     }
     act_grab_mode_ = mode;
+    if (act_grab_mode_ = SingleFrame)
+      act_grab_mode_ = Stop;
 }
 
 // retrieve a frame from the camera
@@ -362,5 +382,12 @@ bool CamFireWire::isFrameAvailable()
 {
 }
 
+bool CamFireWire::clearBuffer()
+{
+    dc1394video_frame_t *tmp;
+    while(dc1394_capture_dequeue(dc_camera, DC1394_CAPTURE_POLICY_POLL, &tmp));
+}
 
 }
+
+

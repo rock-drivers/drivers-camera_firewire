@@ -38,6 +38,7 @@ public:
     bool setAttrib(const enum_attrib::CamAttrib attrib);
     bool setAttrib(const double_attrib::CamAttrib attrib, const double value);
     bool isReadyForOneShot();
+    bool clearBuffer();
 
 public:
     dc1394camera_t *dc_camera;
@@ -48,6 +49,7 @@ private:
     int data_depth;
     int frame_size_in_byte_;
     int multi_shot_count;
+
 
 };
 }
