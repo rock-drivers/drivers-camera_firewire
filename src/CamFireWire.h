@@ -8,13 +8,11 @@
 #ifndef _CAMFIREWIRE_H
 #define	_CAMFIREWIRE_H
 
-#include "/home/cgaudig/CSurvey/drivers/camera_interface/src/CamInterface.h"
-//#include "../arch.h"
+#include "../../camera_interface/src/CamInterface.h"
 #include <dc1394/dc1394.h>
-#include <list>
 #include "../../camera_interface/src/CamInfoUtils.h"
 #include "./filter/frame2rggb.h"
-
+#include <cv.h>
 
 namespace camera
 {
@@ -24,12 +22,6 @@ namespace camera
         CamFireWire();
         virtual ~CamFireWire();
 
-        //! Retrieves bla.
-        /*! This function is bla.
-            \param bla bla
-            \return returns bla
-            \attention bla
-         */
         int listCameras(std::vector<CamInfo>&cam_infos)const;
         bool open(const CamInfo &cam,const AccessMode mode);
         bool isOpen()const;
@@ -44,20 +36,18 @@ namespace camera
         bool isFrameAvailable();
         bool setAttrib(const int_attrib::CamAttrib attrib,const int value);
         bool setAttrib(const enum_attrib::CamAttrib attrib);
-
+	bool setAttrib(const double_attrib::CamAttrib attrib, const double value);
+        bool isReadyForOneShot();
 
     public:
         dc1394camera_t *dc_camera;
 
     private:
         dc1394_t *dc_device;
-        
-        dc1394video_frame_t *camFrame;
-        dc1394video_frame_t *camFrame2;
-        std::list<dc1394video_frame_t*> frames;
         bool hdr_enabled;
         int data_depth;
         int frame_size_in_byte_;
+	int multi_shot_count;
 
     };
 }
