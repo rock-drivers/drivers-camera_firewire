@@ -150,7 +150,7 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
 	  throw std::runtime_error("Set AcquisitionFrameCount (multi-shot) to a positive number before calling grab()!");
 	dc1394_video_set_multi_shot(dc_camera, multi_shot_count, DC1394_ON);
 	//start transmitting frames
-	dc1394_video_set_transmission(dc_camera,DC1394_OFF);
+	dc1394_video_set_transmission(dc_camera,DC1394_ON);
         break;
 	
     // start grabbing frames continuously (using the framerate set beforehand)
@@ -356,5 +356,11 @@ bool CamFireWire::setAttrib(const double_attrib::CamAttrib attrib, const double 
     
     return false;
 };
+
+// should return true whenever a frame is available
+bool CamFireWire::isFrameAvailable()
+{
+}
+
 
 }

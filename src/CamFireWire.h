@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   CamFireWire.h
  * Author: Christopher Gaudig, DFKI Bremen
  *
@@ -16,40 +16,40 @@
 
 namespace camera
 {
-    class CamFireWire : public CamInterface
-    {
-    public:
-        CamFireWire();
-        virtual ~CamFireWire();
+class CamFireWire : public CamInterface
+{
+public:
+    CamFireWire();
+    virtual ~CamFireWire();
 
-        int listCameras(std::vector<CamInfo>&cam_infos)const;
-        bool open(const CamInfo &cam,const AccessMode mode);
-        bool isOpen()const;
-        bool close();
-        bool prepareQueueForGrabbing(const int queue_len);
-        bool grab(const GrabMode mode, const int buffer_len);
-        bool retrieveFrame(Frame &frame,const int timeout);
-        bool setFrameSettings(const frame_size_t size,
-                                      const frame_mode_t mode,
-                                      const  uint8_t color_depth,
-                                      const bool resize_frames);
-        bool isFrameAvailable();
-        bool setAttrib(const int_attrib::CamAttrib attrib,const int value);
-        bool setAttrib(const enum_attrib::CamAttrib attrib);
-	bool setAttrib(const double_attrib::CamAttrib attrib, const double value);
-        bool isReadyForOneShot();
+    int listCameras(std::vector<CamInfo>&cam_infos)const;
+    bool open(const CamInfo &cam,const AccessMode mode);
+    bool isOpen()const;
+    bool close();
+    bool prepareQueueForGrabbing(const int queue_len);
+    bool grab(const GrabMode mode, const int buffer_len);
+    bool retrieveFrame(Frame &frame,const int timeout);
+    bool setFrameSettings(const frame_size_t size,
+                          const frame_mode_t mode,
+                          const  uint8_t color_depth,
+                          const bool resize_frames);
+    bool isFrameAvailable();
+    bool setAttrib(const int_attrib::CamAttrib attrib,const int value);
+    bool setAttrib(const enum_attrib::CamAttrib attrib);
+    bool setAttrib(const double_attrib::CamAttrib attrib, const double value);
+    bool isReadyForOneShot();
 
-    public:
-        dc1394camera_t *dc_camera;
+public:
+    dc1394camera_t *dc_camera;
 
-    private:
-        dc1394_t *dc_device;
-        bool hdr_enabled;
-        int data_depth;
-        int frame_size_in_byte_;
-	int multi_shot_count;
+private:
+    dc1394_t *dc_device;
+    bool hdr_enabled;
+    int data_depth;
+    int frame_size_in_byte_;
+    int multi_shot_count;
 
-    };
+};
 }
 
 #endif	/* _CAMFIREWIRE_H */
