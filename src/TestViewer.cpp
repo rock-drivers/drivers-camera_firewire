@@ -33,6 +33,7 @@
 #include "CamFireWire.h"
 //#include "../../camera_avt_guppy/src/AVT_Guppy.h"
 #include <libraw1394/raw1394.h>
+//#include <curses.h>
 
 using namespace camera;
 
@@ -54,7 +55,7 @@ void plotCameras ( std::vector<CamInfo> &cam_infos)
 
 int main(int argc, char**argv)
 {
-    bool stereo = false;
+    bool stereo = true;
 
     Frame left_frame;
     Frame right_frame;
@@ -65,23 +66,55 @@ int main(int argc, char**argv)
     
     left_frame.init(size.width,size.height,3,MODE_BAYER_RGGB,false);
     if(stereo) right_frame.init(size.width,size.height,3,MODE_BAYER_RGGB,false);
+    
+    std::cerr << 1;
+    
+    // create a new firewire bus device
+    dc1394_t *dc_device = dc1394_new();
+    
+        std::cerr << 2;
 
+    
     CamFireWire left_camera;
+    std::cerr << "left cam created\n";
+    left_camera.setDevice(dc_device);
+    left_camera.cleanup();
     CamFireWire right_camera;
+    std::cerr << "right cam created\n";
+    right_camera.setDevice(dc_device);
+
+
+    //left_camera.cleanup();
     CamInterface &left_cam = left_camera;
+        std::cerr << "left cam linked\n";
+
     CamInterface &right_cam = right_camera;
 
+    std::cerr << "interfaces created";
+    
     //find and display all cameras
-    std::vector<CamInfo> cam_infos;
+    std::vector<CamInfo> cam_infos ;
     left_cam.listCameras(cam_infos);
     std::cerr << "cam.isOpen = " << left_cam.isOpen() << std::endl;
     cvWaitKey(100);
+   
     left_cam.open(cam_infos[0], Master);
     left_cam.setAttrib(camera::int_attrib::IsoSpeed, 400);
-  
-    if(stereo) right_cam.open(cam_infos[1], Monitor);
-    if(stereo) left_cam.setAttrib(camera::int_attrib::IsoSpeed, 200);
-    if(stereo) right_cam.setAttrib(camera::int_attrib::IsoSpeed, 200);
+        
+    if(stereo) 
+    {
+      if(!right_cam.open(cam_infos[1], Monitor))
+      {
+	left_cam.setAttrib(camera::double_attrib::FrameRate, 15);
+	right_cam.setAttrib(camera::double_attrib::FrameRate, 15);
+	left_cam.close();
+	right_cam.close();
+	left_cam.open(cam_infos[0], Master);
+	right_cam.open(cam_infos[1], Monitor);
+      }
+    }
+
+    right_cam.setAttrib(camera::int_attrib::IsoSpeed, 400);
 
     cvWaitKey(100);
     std::cerr << "cam.isOpen = " << left_cam.isOpen() << std::endl;
@@ -97,9 +130,9 @@ int main(int argc, char**argv)
     cvWaitKey(100);
 
     left_cam.setFrameSettings(fs, MODE_BAYER_RGGB, 8, false);
-    left_cam.setAttrib(int_attrib::GainValue, 16);
+    left_cam.setAttrib(int_attrib::GainValue, 64);
     left_cam.setAttrib(enum_attrib::GammaToOn);
-    left_cam.setAttrib(int_attrib::ExposureValue, 300);
+    left_cam.setAttrib(int_attrib::ExposureValue, 35);
     left_cam.setAttrib(int_attrib::WhitebalValueBlue, 580);
     left_cam.setAttrib(int_attrib::WhitebalValueRed, 650);
     left_cam.setAttrib(int_attrib::AcquisitionFrameCount, 200);
@@ -107,40 +140,70 @@ int main(int argc, char**argv)
     if(stereo)
     {
         right_cam.setFrameSettings(fs, MODE_BAYER_RGGB, 8, false);
-        right_cam.setAttrib(int_attrib::GainValue, 16);
+        right_cam.setAttrib(int_attrib::GainValue, 64);
         right_cam.setAttrib(enum_attrib::GammaToOn);
-        right_cam.setAttrib(int_attrib::ExposureValue,300);
+        right_cam.setAttrib(int_attrib::ExposureValue,35);
         right_cam.setAttrib(int_attrib::WhitebalValueBlue, 580);
         right_cam.setAttrib(int_attrib::WhitebalValueRed, 650);
 	right_cam.setAttrib(int_attrib::AcquisitionFrameCount, 200);
     }
 
     cvWaitKey(50);
-    timeval ts, te;
+    timeval ts, te, tcurr, tprev;
     
     gettimeofday(&ts,NULL);
+    gettimeofday(&tcurr,NULL);
 
-    left_cam.setAttrib(camera::double_attrib::FrameRate,30);
-    if(stereo) right_cam.setAttrib(camera::double_attrib::FrameRate,30);
+    left_cam.setAttrib(camera::double_attrib::FrameRate, 60);
+    if(stereo) right_cam.setAttrib(camera::double_attrib::FrameRate, 60);
+
     
     left_camera.clearBuffer();
     if(stereo) right_camera.clearBuffer();
     
-    for(int i = 0 ; i< 200 ; i++)
+    int total_frames = 0;
+    
+    //left_cam.grab(camera::Continuously, 10);
+    //right_cam.grab(camera::Continuously, 10);
+    
+    for(int i = 0 ; i< 10000 ; i++)
     {
-	left_cam.grab(SingleFrame, 10);
-        std::cerr << "retrieving..." << std::endl;
+    //  left_camera.clearBuffer();
+    //if(stereo) right_camera.clearBuffer();
+
+
+	uint32_t val;
+	//dc1394_set_control_register(left_camera.dc_camera, 0x0834, 0x82000001);
+	//	dc1394_set_control_register(right_camera.dc_camera, 0x0834, 0x82000001);
+
+	//std::cerr << "get reg = " << dc1394_get_control_register(left_camera.dc_camera, 0x0834, &val);
+	//printf("value = %x",val);
+	
+	       left_cam.grab(SingleFrame, 10);
+
+	
+    std::cerr << "retrieving..." << std::endl;
 	left_cam.retrieveFrame(left_frame,0);
 	if(stereo) right_cam.retrieveFrame(right_frame,0);;
 	imshow("left",left_frame.convertToCvMat());
 	if(stereo) imshow("right", right_frame.convertToCvMat());
-	cvWaitKey(2);
+	if(cvWaitKey(2) != -1) {total_frames = i; break;}	
+	tprev=tcurr;
+	gettimeofday(&tcurr,NULL);
+        double delta_t = (1000000*tcurr.tv_sec+tcurr.tv_usec - 1000000*tprev.tv_sec-tprev.tv_usec)/1000000.0;
+	std::cerr << "\n" << delta_t << " seconds = " << 1.0/delta_t << " fps" << std::endl;
+	total_frames = i;
     }
-    
+   
     gettimeofday(&te,NULL);
-    std::cerr << (1000000*te.tv_sec+te.tv_usec - 1000000*ts.tv_sec-ts.tv_usec)/1000000.0 << " seconds" << std::endl;
+    double total_time = (1000000*te.tv_sec+te.tv_usec - 1000000*ts.tv_sec-ts.tv_usec)/1000000.0;
+    std::cerr << total_time << " seconds" << std::endl;
+    std::cerr << total_frames / total_time << " fps avg" << std::endl;
     cvWaitKey();
 
+    left_cam.setAttrib(camera::double_attrib::FrameRate,15);
+    if(stereo) right_cam.setAttrib(camera::double_attrib::FrameRate,15);
+    
     //close camera
     left_cam.close();
     if(stereo) right_cam.close();
