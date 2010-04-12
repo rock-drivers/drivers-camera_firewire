@@ -7,6 +7,7 @@
   <logo>http://</logo>
   <depend package="base" />
   <depend package="drivers/camera_interface" />
+  <depend package="dc1394" />
   <versioncontrol type="git" url="" />
   <export>
     <cpp cflags="" lflags="" />
