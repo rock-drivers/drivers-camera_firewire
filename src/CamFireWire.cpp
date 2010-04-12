@@ -358,27 +358,61 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
     // the (enum) value we want to set
     dc1394switch_t value;
     
+    // the feature mode (auto/manual) we want to set
+    dc1394feature_mode_t mode;
+    
     switch (attrib)
     {
     // turn gamma on
     case enum_attrib::GammaToOn:
         feature = DC1394_FEATURE_GAMMA;
         value = DC1394_ON;
+	// set the desired attribute/feature value
+        dc1394_feature_set_power(dc_camera, feature , value);
         break;
 	
     // turn gamma off
     case enum_attrib::GammaToOff:
         feature = DC1394_FEATURE_GAMMA;
         value = DC1394_OFF;
+	// set the desired attribute/feature value
+        dc1394_feature_set_power(dc_camera, feature , value);
         break;
 	
+    // turn auto exposure on
+    case enum_attrib::ExposureModeToAuto:
+        feature = DC1394_FEATURE_SHUTTER;
+        mode = DC1394_FEATURE_MODE_AUTO;
+	dc1394_feature_set_mode(dc_camera, feature, mode);
+        break;
+
+    // turn auto exposure off
+    case enum_attrib::ExposureModeToManual:
+        feature = DC1394_FEATURE_SHUTTER;
+        mode = DC1394_FEATURE_MODE_MANUAL;
+	dc1394_feature_set_mode(dc_camera, feature, mode);
+        break;
+
+    // turn auto gain on
+    case enum_attrib::GainModeToAuto:
+        feature = DC1394_FEATURE_GAIN;
+        mode = DC1394_FEATURE_MODE_AUTO;
+	dc1394_feature_set_mode(dc_camera, feature, mode);
+        break;
+
+    // turn auto gain off
+    case enum_attrib::GainModeToManual:
+        feature = DC1394_FEATURE_GAIN;
+        mode = DC1394_FEATURE_MODE_MANUAL;
+	dc1394_feature_set_mode(dc_camera, feature, mode);
+        break;
+
     // attribute unknown or not supported (yet)
     default:
         throw std::runtime_error("Unknown attribute!");
     };
 
-    // set the desired attribute/feature value
-    dc1394_feature_set_power(dc_camera, feature , value);
+    
 
     return false;
 };
