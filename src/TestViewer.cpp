@@ -206,8 +206,8 @@ int main(int argc, char**argv)
 	//vw << left_frame.convertToCvMat();
 	
 	char* filename = new char[100];
-	sprintf(filename,"~/test%8d.png",i);
-	imwrite(filename,left_frame.convertToCvMat());
+	sprintf(filename,"~/test%d.png",i);
+	cv::imwrite(filename,left_frame.convertToCvMat());
 	
 	if(cvWaitKey(2) != -1) {total_frames = i; break;}	
 	tprev=tcurr;
