@@ -199,11 +199,15 @@ int main(int argc, char**argv)
 	imshow("left",left_frame.convertToCvMat());
 	if(stereo) imshow("right", right_frame.convertToCvMat());
 	
-	cv::VideoWriter *vw = new cv::VideoWriter("~/test.avi", 0, 15, cv::Size(640, 480), true);
+	//cv::VideoWriter *vw = new cv::VideoWriter("~/test.avi", 0, 15, cv::Size(640, 480), true);
 	
-	std::cerr << "video writer open = " << vw->isOpened() << std::endl;
+	//std::cerr << "video writer open = " << vw->isOpened() << std::endl;
 	
-	vw << left_frame.convertToCvMat();
+	//vw << left_frame.convertToCvMat();
+	
+	char* filename = new char[100];
+	sprintf(filename,"~/test%8d.png",i);
+	imwrite(filename,left_frame.convertToCvMat());
 	
 	if(cvWaitKey(2) != -1) {total_frames = i; break;}	
 	tprev=tcurr;
