@@ -111,10 +111,11 @@ int main(int argc, char**argv)
 	right_cam.close();
 	left_cam.open(cam_infos[0], Master);
 	right_cam.open(cam_infos[1], Monitor);
+	right_cam.setAttrib(camera::int_attrib::IsoSpeed, 400);
       }
     }
 
-    right_cam.setAttrib(camera::int_attrib::IsoSpeed, 400);
+    
 
     cvWaitKey(100);
     std::cerr << "cam.isOpen = " << left_cam.isOpen() << std::endl;
@@ -130,22 +131,25 @@ int main(int argc, char**argv)
     cvWaitKey(100);
 
     left_cam.setFrameSettings(fs, MODE_BAYER_RGGB, 8, false);
-    left_cam.setAttrib(int_attrib::GainValue, 64);
+    left_cam.setAttrib(int_attrib::GainValue, 32);
     left_cam.setAttrib(enum_attrib::GammaToOn);
-    left_cam.setAttrib(int_attrib::ExposureValue, 35);
+    left_cam.setAttrib(int_attrib::ExposureValue, 750);
     left_cam.setAttrib(int_attrib::WhitebalValueBlue, 580);
     left_cam.setAttrib(int_attrib::WhitebalValueRed, 650);
     left_cam.setAttrib(int_attrib::AcquisitionFrameCount, 200);
+    left_cam.setAttrib(enum_attrib::ExposureModeToManual);
 
     if(stereo)
     {
         right_cam.setFrameSettings(fs, MODE_BAYER_RGGB, 8, false);
-        right_cam.setAttrib(int_attrib::GainValue, 64);
+        right_cam.setAttrib(int_attrib::GainValue, 32);
         right_cam.setAttrib(enum_attrib::GammaToOn);
-        right_cam.setAttrib(int_attrib::ExposureValue,35);
+        right_cam.setAttrib(int_attrib::ExposureValue,750);
         right_cam.setAttrib(int_attrib::WhitebalValueBlue, 580);
         right_cam.setAttrib(int_attrib::WhitebalValueRed, 650);
 	right_cam.setAttrib(int_attrib::AcquisitionFrameCount, 200);
+	right_cam.setAttrib(enum_attrib::ExposureModeToManual);
+
     }
 
     cvWaitKey(50);
@@ -166,6 +170,10 @@ int main(int argc, char**argv)
     //left_cam.grab(camera::Continuously, 10);
     //right_cam.grab(camera::Continuously, 10);
     
+    	       left_cam.grab(SingleFrame, 2);
+
+            cvWaitKey(500);
+
     for(int i = 0 ; i< 10000 ; i++)
     {
     //  left_camera.clearBuffer();
@@ -179,12 +187,15 @@ int main(int argc, char**argv)
 	//std::cerr << "get reg = " << dc1394_get_control_register(left_camera.dc_camera, 0x0834, &val);
 	//printf("value = %x",val);
 	
-	       left_cam.grab(SingleFrame, 10);
+	       left_cam.grab(SingleFrame, 2);
 
 	
     std::cerr << "retrieving..." << std::endl;
+        cvWaitKey(1);
 	left_cam.retrieveFrame(left_frame,0);
 	if(stereo) right_cam.retrieveFrame(right_frame,0);;
+	        cvWaitKey(30);
+
 	imshow("left",left_frame.convertToCvMat());
 	if(stereo) imshow("right", right_frame.convertToCvMat());
 	if(cvWaitKey(2) != -1) {total_frames = i; break;}	
