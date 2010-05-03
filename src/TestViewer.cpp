@@ -199,7 +199,9 @@ int main(int argc, char**argv)
 	imshow("left",left_frame.convertToCvMat());
 	if(stereo) imshow("right", right_frame.convertToCvMat());
 	
-	cv::VideoWriter vw = cv::VideoWriter("~/test.avi", 0, 15, cv::Size(640, 480), true);
+	cv::VideoWriter *vw = new cv::VideoWriter("~/test.avi", 0, 15, cv::Size(640, 480), true);
+	
+	std::cerr << "video writer open = " << vw->isOpened() << std::endl;
 	
 	vw << left_frame.convertToCvMat();
 	
