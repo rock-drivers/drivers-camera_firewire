@@ -198,6 +198,11 @@ int main(int argc, char**argv)
 
 	imshow("left",left_frame.convertToCvMat());
 	if(stereo) imshow("right", right_frame.convertToCvMat());
+	
+	cv::VideoWriter vw = cv::VideoWriter("~/test.avi", 0, 15, cv::Size(640, 480), true);
+	
+	vw << left_frame.convertToCvMat();
+	
 	if(cvWaitKey(2) != -1) {total_frames = i; break;}	
 	tprev=tcurr;
 	gettimeofday(&tcurr,NULL);
