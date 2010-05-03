@@ -194,7 +194,7 @@ int main(int argc, char**argv)
         cvWaitKey(1);
 	left_cam.retrieveFrame(left_frame,0);
 	if(stereo) right_cam.retrieveFrame(right_frame,0);;
-	        cvWaitKey(30);
+	        cvWaitKey(50);
 
 	imshow("left",left_frame.convertToCvMat());
 	if(stereo) imshow("right", right_frame.convertToCvMat());
@@ -205,9 +205,13 @@ int main(int argc, char**argv)
 	
 	//vw << left_frame.convertToCvMat();
 	
-	char* filename = new char[100];
-	sprintf(filename,"~/test%d.png",i);
+	char *filename = new char[100];
+	sprintf(filename, "/home/toughguy/left%08d.bmp",i);
 	cv::imwrite(filename,left_frame.convertToCvMat());
+	
+	sprintf(filename, "/home/toughguy/right%08d.bmp",i);
+	cv::imwrite(filename,right_frame.convertToCvMat());
+	
 	
 	if(cvWaitKey(2) != -1) {total_frames = i; break;}	
 	tprev=tcurr;
