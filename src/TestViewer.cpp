@@ -34,6 +34,7 @@
 //#include "../../camera_avt_guppy/src/AVT_Guppy.h"
 #include <libraw1394/raw1394.h>
 //#include <curses.h>
+#include <sys/stat.h>
 
 using namespace camera;
 
@@ -131,9 +132,9 @@ int main(int argc, char**argv)
     cvWaitKey(100);
 
     left_cam.setFrameSettings(fs, MODE_BAYER_RGGB, 8, false);
-    left_cam.setAttrib(int_attrib::GainValue, 32);
+    left_cam.setAttrib(int_attrib::GainValue, 16);
     left_cam.setAttrib(enum_attrib::GammaToOn);
-    left_cam.setAttrib(int_attrib::ExposureValue, 750);
+    left_cam.setAttrib(int_attrib::ExposureValue, 150);
     left_cam.setAttrib(int_attrib::WhitebalValueBlue, 580);
     left_cam.setAttrib(int_attrib::WhitebalValueRed, 650);
     left_cam.setAttrib(int_attrib::AcquisitionFrameCount, 200);
@@ -142,9 +143,9 @@ int main(int argc, char**argv)
     if(stereo)
     {
         right_cam.setFrameSettings(fs, MODE_BAYER_RGGB, 8, false);
-        right_cam.setAttrib(int_attrib::GainValue, 32);
+        right_cam.setAttrib(int_attrib::GainValue, 16);
         right_cam.setAttrib(enum_attrib::GammaToOn);
-        right_cam.setAttrib(int_attrib::ExposureValue,750);
+        right_cam.setAttrib(int_attrib::ExposureValue,150);
         right_cam.setAttrib(int_attrib::WhitebalValueBlue, 580);
         right_cam.setAttrib(int_attrib::WhitebalValueRed, 650);
 	right_cam.setAttrib(int_attrib::AcquisitionFrameCount, 200);
@@ -174,6 +175,24 @@ int main(int argc, char**argv)
 
             cvWaitKey(500);
 
+
+	
+time_t rawtime;
+  tm * ptm;
+
+  time ( &rawtime );
+
+  ptm = gmtime ( &rawtime );
+
+    char path[100];
+    sprintf(path, "/home/toughguy/%d_%02d_%02d_%02dh%02dm%02ds", 1900+ptm->tm_year, 1+ptm->tm_mon, ptm->tm_mday, 2+ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+    std::cerr << "path = " << path << std::endl;
+
+    mkdir(path, 0777);    
+    
+           left_cam.grab(Continuously, 20);
+	       right_cam.grab(Continuously, 20);
+    
     for(int i = 0 ; i< 10000 ; i++)
     {
     //  left_camera.clearBuffer();
@@ -187,14 +206,17 @@ int main(int argc, char**argv)
 	//std::cerr << "get reg = " << dc1394_get_control_register(left_camera.dc_camera, 0x0834, &val);
 	//printf("value = %x",val);
 	
-	       left_cam.grab(SingleFrame, 2);
+	      // left_cam.grab(SingleFrame, 2);
+	       
+	
+
 
 	
     std::cerr << "retrieving..." << std::endl;
         cvWaitKey(1);
-	left_cam.retrieveFrame(left_frame,0);
-	if(stereo) right_cam.retrieveFrame(right_frame,0);;
-	        cvWaitKey(50);
+	left_camera.retrieveFrame(left_frame,0);
+	if(stereo) right_camera.retrieveFrame(right_frame,0);;
+	       // cvWaitKey(50);
 
 	imshow("left",left_frame.convertToCvMat());
 	if(stereo) imshow("right", right_frame.convertToCvMat());
@@ -205,11 +227,13 @@ int main(int argc, char**argv)
 	
 	//vw << left_frame.convertToCvMat();
 	
+	
+	
 	char *filename = new char[100];
-	sprintf(filename, "/home/toughguy/left%08d.bmp",i);
+	sprintf(filename, "%s/left%08d.pgm",path, i);
 	cv::imwrite(filename,left_frame.convertToCvMat());
 	
-	sprintf(filename, "/home/toughguy/right%08d.bmp",i);
+	sprintf(filename, "%s/right%08d.pgm",path,i);
 	cv::imwrite(filename,right_frame.convertToCvMat());
 	
 	

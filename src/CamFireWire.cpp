@@ -32,21 +32,23 @@ bool CamFireWire::cleanup()
     if ( dc1394_video_get_bandwidth_usage(tmp_camera, &val) == DC1394_SUCCESS &&
     dc1394_iso_release_bandwidth(tmp_camera, val) == DC1394_SUCCESS )
     std::cout << "Succesfully released " << val << " bytes of Bandwidth." << std::endl;
-    if ( dc1394_video_get_iso_channel(tmp_camera, &val) == DC1394_SUCCESS &&
+    /*if ( dc1394_video_get_iso_channel(tmp_camera, &val) == DC1394_SUCCESS &&
     dc1394_iso_release_channel(tmp_camera, val) == DC1394_SUCCESS )
     std::cout << "Succesfully released ISO channel #" << val << "." << std::endl;
-
+*/
     //dc1394_camera_free(tmp_camera);
-    
-    tmp_camera = dc1394_camera_new(dc_device, list->ids[1].guid);
-    dc1394_reset_bus(tmp_camera);
-    if ( dc1394_video_get_bandwidth_usage(tmp_camera, &val) == DC1394_SUCCESS &&
-    dc1394_iso_release_bandwidth(tmp_camera, val) == DC1394_SUCCESS )
-    std::cout << "Succesfully released " << val << " bytes of Bandwidth." << std::endl;
-    if ( dc1394_video_get_iso_channel(tmp_camera, &val) == DC1394_SUCCESS &&
-    dc1394_iso_release_channel(tmp_camera, val) == DC1394_SUCCESS )
-    std::cout << "Succesfully released ISO channel #" << val << "." << std::endl;
-
+    std::cerr << "list->num = " << list->num << std::endl;
+    if(list->num > 1)
+    {
+      tmp_camera = dc1394_camera_new(dc_device, list->ids[1].guid);
+      dc1394_reset_bus(tmp_camera);
+      if ( dc1394_video_get_bandwidth_usage(tmp_camera, &val) == DC1394_SUCCESS &&
+      dc1394_iso_release_bandwidth(tmp_camera, val) == DC1394_SUCCESS )
+      std::cout << "Succesfully released " << val << " bytes of Bandwidth." << std::endl;
+      if ( dc1394_video_get_iso_channel(tmp_camera, &val) == DC1394_SUCCESS &&
+      dc1394_iso_release_channel(tmp_camera, val) == DC1394_SUCCESS )
+      std::cout << "Succesfully released ISO channel #" << val << "." << std::endl;
+    }
   //  dc1394_camera_free(tmp_camera);
 }
 
@@ -224,18 +226,29 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
 // retrieve a frame from the camera
 bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
 {
+    bool color = false;
+  
     // dequeue a frame using the dc1394-frame tmp_frame
     dc1394video_frame_t *tmp_frame;
     dc1394_capture_dequeue(dc_camera, DC1394_CAPTURE_POLICY_WAIT, &tmp_frame );
     std::cerr << tmp_frame->timestamp / 1000<< "\n";
-    // create a new DFKI frame and copy the data from tmp_frame
-    Frame tmp;
-    tmp.init(image_size_.width, image_size_.height, data_depth, MODE_BAYER_RGGB, hdr_enabled);
-    tmp.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
     
-    // convert the bayer pattern image to RGB
-	//camera::Helper::convertBayerToRGB24(tmp_frame->image, test.getImagePtr(), 640, 480, MODE_BAYER_RGGB);
-    filter::Frame2RGGB::process(tmp,frame);
+    if(color)
+    {
+      // create a new DFKI frame and copy the data from tmp_frame
+      Frame tmp;
+      tmp.init(image_size_.width, image_size_.height, data_depth, MODE_BAYER_RGGB, hdr_enabled);
+      tmp.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
+      
+      // convert the bayer pattern image to RGB
+	  //camera::Helper::convertBayerToRGB24(tmp_frame->image, test.getImagePtr(), 640, 480, MODE_BAYER_RGGB);
+      filter::Frame2RGGB::process(tmp,frame);
+    }
+    else
+    {
+      frame.init(image_size_.width, image_size_.height, data_depth, MODE_BAYER_RGGB, hdr_enabled);
+      frame.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
+    }
     
     // re-queue the frame previously used for dequeueing
     dc1394_capture_enqueue(dc_camera,tmp_frame);
