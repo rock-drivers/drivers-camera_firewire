@@ -6,9 +6,11 @@
  */
 
 #include <iostream>
+#include "camera_interface/CamInfoUtils.h"
 #include <opencv/highgui.h>
 #include "CamFireWire.h"
 
+using namespace base::samples::frame;
 namespace camera
 {
 

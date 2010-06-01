@@ -8,9 +8,8 @@
 #ifndef _CAMFIREWIRE_H
 #define	_CAMFIREWIRE_H
 
-#include "../../camera_interface/src/CamInterface.h"
+#include "camera_interface/CamInterface.h"
 #include <dc1394/dc1394.h>
-#include "../../camera_interface/src/CamInfoUtils.h"
 #include "./filter/frame2rggb.h"
 #include <cv.h>
 
@@ -28,9 +27,9 @@ public:
     bool close();
     bool prepareQueueForGrabbing(const int queue_len);
     bool grab(const GrabMode mode, const int buffer_len);
-    bool retrieveFrame(Frame &frame,const int timeout);
-    bool setFrameSettings(const frame_size_t size,
-                          const frame_mode_t mode,
+    bool retrieveFrame(base::samples::frame::Frame &frame,const int timeout);
+    bool setFrameSettings(const base::samples::frame::frame_size_t size,
+                          const base::samples::frame::frame_mode_t mode,
                           const  uint8_t color_depth,
                           const bool resize_frames);
     bool isFrameAvailable();

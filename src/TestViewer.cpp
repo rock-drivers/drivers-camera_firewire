@@ -37,6 +37,7 @@
 #include <sys/stat.h>
 
 using namespace camera;
+using namespace base::samples::frame;
 
 void plotCameras ( std::vector<CamInfo> &cam_infos)
 {

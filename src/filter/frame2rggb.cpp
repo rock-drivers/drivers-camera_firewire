@@ -2,12 +2,12 @@
 
 #include <dc1394/conversions.h>
 
+using namespace base::samples::frame;
 namespace filter
 {
-
-    bool Frame2RGGB::process(const camera::Frame &in, camera::Frame &out)
+    bool Frame2RGGB::process(const Frame &in, Frame &out)
     {
-        if (in.getFrameMode() != camera::MODE_BAYER_RGGB)
+        if (in.getFrameMode() != MODE_BAYER_RGGB)
         {
             std::cerr << "Frame2RGGB: "
                 << __FUNCTION__ << " (" << __FILE__ << ", line "
@@ -17,7 +17,7 @@ namespace filter
         }
 
         // Create output image
-        out.init(in.getWidth(), in.getHeight(), in.getDataDepth(), camera::MODE_RGB);
+        out.init(in.getWidth(), in.getHeight(), in.getDataDepth(), MODE_RGB);
 
         if (in.getDataDepth() <= 8)
         {
