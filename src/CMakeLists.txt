@@ -7,9 +7,9 @@ install(TARGETS ${PROJECT_NAME}
 		LIBRARY DESTINATION lib
     )
 
-SET(TestViewer TestViewer)
-SET(module_name ${TestViewer})
-add_executable(${TestViewer} TestViewer.cpp)   
-target_link_libraries(${TestViewer} cv highgui camera_firewire)
-install(TARGETS ${TestViewer} RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/test)
+#SET(TestViewer TestViewer)
+#SET(module_name ${TestViewer})
+#add_executable(${TestViewer} TestViewer.cpp)   
+#target_link_libraries(${TestViewer} cv highgui camera_firewire)
+#install(TARGETS ${TestViewer} RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/test)
 
