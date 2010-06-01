@@ -228,7 +228,7 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
 // retrieve a frame from the camera
 bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
 {
-    bool color = false;
+    bool color = true;
   
     // dequeue a frame using the dc1394-frame tmp_frame
     dc1394video_frame_t *tmp_frame;

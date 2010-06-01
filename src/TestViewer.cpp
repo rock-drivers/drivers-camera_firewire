@@ -57,7 +57,7 @@ void plotCameras ( std::vector<CamInfo> &cam_infos)
 
 int main(int argc, char**argv)
 {
-    bool stereo = true;
+    bool stereo = false;
 
     Frame left_frame;
     Frame right_frame;
@@ -81,6 +81,7 @@ int main(int argc, char**argv)
     std::cerr << "left cam created\n";
     left_camera.setDevice(dc_device);
     left_camera.cleanup();
+    
     CamFireWire right_camera;
     std::cerr << "right cam created\n";
     right_camera.setDevice(dc_device);
@@ -97,12 +98,20 @@ int main(int argc, char**argv)
     //find and display all cameras
     std::vector<CamInfo> cam_infos ;
     left_cam.listCameras(cam_infos);
+        std::cerr << "c0" << std::endl;   
     std::cerr << "cam.isOpen = " << left_cam.isOpen() << std::endl;
+        std::cerr << "c1" << std::endl;   
     cvWaitKey(100);
-   
+
+    std::cerr << "c1" << std::endl;   
+
     left_cam.open(cam_infos[0], Master);
+    std::cerr << "c2" << std::endl;
     left_cam.setAttrib(camera::int_attrib::IsoSpeed, 400);
-        
+    std::cerr << "c3" << std::endl;
+	left_cam.setAttrib(camera::double_attrib::FrameRate, 15);        
+    std::cerr << "c4" << std::endl;
+
     if(stereo) 
     {
       if(!right_cam.open(cam_infos[1], Monitor))
@@ -117,7 +126,7 @@ int main(int argc, char**argv)
       }
     }
 
-    
+    std::cerr << "c" << std::endl;
 
     cvWaitKey(100);
     std::cerr << "cam.isOpen = " << left_cam.isOpen() << std::endl;
@@ -130,6 +139,8 @@ int main(int argc, char**argv)
     cvMoveWindow("left",10,10);
     if(stereo) cvMoveWindow("right",800,10);
 
+std::cerr << "b" << std::endl;
+
     cvWaitKey(100);
 
     left_cam.setFrameSettings(fs, MODE_BAYER_RGGB, 8, false);
@@ -139,7 +150,8 @@ int main(int argc, char**argv)
     left_cam.setAttrib(int_attrib::WhitebalValueBlue, 580);
     left_cam.setAttrib(int_attrib::WhitebalValueRed, 650);
     left_cam.setAttrib(int_attrib::AcquisitionFrameCount, 200);
-    left_cam.setAttrib(enum_attrib::ExposureModeToManual);
+    //left_cam.setAttrib(enum_attrib::ExposureModeToManual);
+left_cam.setAttrib(enum_attrib::ExposureModeToAuto);
 
     if(stereo)
     {
@@ -160,7 +172,7 @@ int main(int argc, char**argv)
     gettimeofday(&ts,NULL);
     gettimeofday(&tcurr,NULL);
 
-    left_cam.setAttrib(camera::double_attrib::FrameRate, 60);
+    left_cam.setAttrib(camera::double_attrib::FrameRate, 15);
     if(stereo) right_cam.setAttrib(camera::double_attrib::FrameRate, 60);
 
     
@@ -172,11 +184,11 @@ int main(int argc, char**argv)
     //left_cam.grab(camera::Continuously, 10);
     //right_cam.grab(camera::Continuously, 10);
     
-    	       left_cam.grab(SingleFrame, 2);
+    	   //    left_cam.grab(SingleFrame, 2);
 
             cvWaitKey(500);
 
-
+std::cerr << "a" << std::endl;
 	
 time_t rawtime;
   tm * ptm;
@@ -186,13 +198,13 @@ time_t rawtime;
   ptm = gmtime ( &rawtime );
 
     char path[100];
-    sprintf(path, "/home/toughguy/%d_%02d_%02d_%02dh%02dm%02ds", 1900+ptm->tm_year, 1+ptm->tm_mon, ptm->tm_mday, 2+ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+    sprintf(path, "./started_at_%d_%02d_%02d_%02dh%02dm%02ds", 1900+ptm->tm_year, 1+ptm->tm_mon, ptm->tm_mday, 2+ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
     std::cerr << "path = " << path << std::endl;
 
     mkdir(path, 0777);    
     
            left_cam.grab(Continuously, 20);
-	       right_cam.grab(Continuously, 20);
+	    if(stereo)   right_cam.grab(Continuously, 20);
     
     for(int i = 0 ; i< 10000 ; i++)
     {
@@ -228,15 +240,27 @@ time_t rawtime;
 	
 	//vw << left_frame.convertToCvMat();
 	
-	
+   timeval tim;
+             gettimeofday(&tim, NULL);
+             long t1=tim.tv_sec*1000+(tim.tv_usec/1000);
+
+
+std::cerr << "t1 = " << t1 << std::endl;
+
+ 
+
+
+	  
 	
 	char *filename = new char[100];
-	sprintf(filename, "%s/left%08d.pgm",path, i);
+	sprintf(filename, "%s/left%08d_ts%13ld.pgm",path, i, t1);
 	cv::imwrite(filename,left_frame.convertToCvMat());
 	
+	if(stereo)
+{
 	sprintf(filename, "%s/right%08d.pgm",path,i);
 	cv::imwrite(filename,right_frame.convertToCvMat());
-	
+}	
 	
 	if(cvWaitKey(2) != -1) {total_frames = i; break;}	
 	tprev=tcurr;
