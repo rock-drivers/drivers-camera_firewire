@@ -191,8 +191,9 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
 	
 	//dc1394_set_adv_control_register(dc_camera, 0x340, 0);
 		//dc1394_video_set_one_shot(dc_camera, DC1394_ON);
-	dc1394_set_control_register(dc_camera,0x61c, 0x82000000);
-
+	//dc1394_set_control_register(dc_camera,0x61c, 0x82000000); //this triggers the one-shot
+	dc1394_set_control_register(dc_camera, 0x614, 0x00000000); //stop free-run
+	dc1394_set_control_register(dc_camera, 0x614, 0x82000000); //set to trigger_mode_0
 		dc1394_camera_set_broadcast(dc_camera, DC1394_FALSE);
 
 	std::cerr << "done";

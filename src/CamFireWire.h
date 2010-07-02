@@ -40,7 +40,7 @@ public:
     bool clearBuffer();
     bool cleanup();
     bool setDevice(dc1394_t *dev);
-
+    
 public:
     dc1394camera_t *dc_camera;
 
