@@ -33,6 +33,7 @@
 #include "CamFireWire.h"
 //#include "../../camera_avt_guppy/src/AVT_Guppy.h"
 #include <libraw1394/raw1394.h>
+#include <dc1394/dc1394.h>
 //#include <curses.h>
 #include <sys/stat.h>
 

@@ -9,14 +9,12 @@
 #define	_CAMFIREWIRE_H
 
 #include "camera_interface/CamInterface.h"
-#include <dc1394/dc1394.h>
 #include "./filter/frame2rggb.h"
-#include <cv.h>
 
-namespace cv
-{
-Mat rotateImage(const Mat& source, double angle);
-}
+struct __dc1394_camera;
+typedef __dc1394_camera dc1394camera_t;
+struct __dc1394_t;
+typedef __dc1394_t dc1394_t;
 
 namespace camera
 {

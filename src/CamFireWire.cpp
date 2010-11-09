@@ -10,13 +10,15 @@
 #include <opencv/highgui.h>
 #include <opencv/cv.h>
 #include "CamFireWire.h"
+#include <dc1394/dc1394.h>
+
 
 using namespace base::samples::frame;
 
 namespace cv
 {
 
-	cv::Mat rotateImage(const Mat& source, double angle)
+	static cv::Mat rotateImage(const Mat& source, double angle)
 	{
     		Point2f src_center(source.cols/2.0, source.rows/2.0);
     		Mat rot_mat = getRotationMatrix2D(src_center, angle, 1.0);
