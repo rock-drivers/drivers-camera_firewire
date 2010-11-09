@@ -8,9 +8,26 @@
 #include <iostream>
 #include "camera_interface/CamInfoUtils.h"
 #include <opencv/highgui.h>
+#include <opencv/cv.h>
 #include "CamFireWire.h"
 
 using namespace base::samples::frame;
+
+namespace cv
+{
+
+	cv::Mat rotateImage(const Mat& source, double angle)
+	{
+    		Point2f src_center(source.cols/2.0, source.rows/2.0);
+    		Mat rot_mat = getRotationMatrix2D(src_center, angle, 1.0);
+    		Mat dst;
+    		warpAffine(source, dst, rot_mat, source.size());
+    		return dst;
+	}
+
+
+}
+
 namespace camera
 {
 
@@ -46,10 +63,10 @@ bool CamFireWire::cleanup()
       dc1394_reset_bus(tmp_camera);
       if ( dc1394_video_get_bandwidth_usage(tmp_camera, &val) == DC1394_SUCCESS &&
       dc1394_iso_release_bandwidth(tmp_camera, val) == DC1394_SUCCESS )
-      std::cout << "Succesfully released " << val << " bytes of Bandwidth." << std::endl;
+      std::cout << "Successfully released " << val << " bytes of Bandwidth." << std::endl;
       if ( dc1394_video_get_iso_channel(tmp_camera, &val) == DC1394_SUCCESS &&
       dc1394_iso_release_channel(tmp_camera, val) == DC1394_SUCCESS )
-      std::cout << "Succesfully released ISO channel #" << val << "." << std::endl;
+      std::cout << "Successfully released ISO channel #" << val << "." << std::endl;
     }
   //  dc1394_camera_free(tmp_camera);
 }
@@ -122,7 +139,7 @@ bool CamFireWire::open(const CamInfo &cam,const AccessMode mode)
     act_grab_mode_= Stop;
     
     if(0 != dc1394_capture_setup(dc_camera,8, DC1394_CAPTURE_FLAGS_DEFAULT)) return false;
-    dc1394_video_set_transmission(dc_camera, DC1394_OFF);
+    dc1394_video_set_transmission(dc_camera, DC1394_ON);
     dc1394_camera_set_broadcast(dc_camera, DC1394_FALSE);
     return true;
 }
@@ -183,17 +200,22 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
             throw std::runtime_error("Camera is not one-shot capable!");
       
 	std::cerr << "setting one shot register...";
-	uint32_t t1;
-	std::cerr << dc1394_get_control_register(dc_camera,0x834, &t1) << " ";
-	std::cerr << "intena delay = " << t1 << std::endl;
+//	uint32_t t1;
+//	std::cerr << dc1394_get_control_register(dc_camera,0x834, &t1) << " ";
+//	std::cerr << "intena delay = " << t1 << std::endl;
 	dc1394_camera_set_broadcast(dc_camera, DC1394_TRUE);
 		//dc1394_set_control_register(dc_camera,0x614, 0x0);
 	
 	//dc1394_set_adv_control_register(dc_camera, 0x340, 0);
-		//dc1394_video_set_one_shot(dc_camera, DC1394_ON);
-	//dc1394_set_control_register(dc_camera,0x61c, 0x82000000); //this triggers the one-shot
-	dc1394_set_control_register(dc_camera, 0x614, 0x00000000); //stop free-run
-	dc1394_set_control_register(dc_camera, 0x614, 0x82000000); //set to trigger_mode_0
+		//dc1394_video_set_one_shot(dc_camera, DC1394_ON); //for exposure test
+		//dc1394_set_control_register(dc_camera, 0x614, 0x00000000); //stop free-run
+	
+		//dc1394_set_control_register(dc_camera, 0x830, 0x82000000); //set to trigger_mode_0
+//dc1394_set_control_register(dc_camera,0x61c, 0x80000000); //this triggers the one-shot
+		std::cerr << "now setting external trigger power to on" << std::endl;
+		//dc1394_external_trigger_set_power(dc_camera, DC1394_ON);
+		dc1394_feature_set_power(dc_camera, DC1394_FEATURE_TRIGGER, DC1394_ON); //for exposure test
+		std::cerr << "done" << std::endl;
 		dc1394_camera_set_broadcast(dc_camera, DC1394_FALSE);
 
 	std::cerr << "done";
@@ -216,6 +238,7 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
     // start grabbing frames continuously (using the framerate set beforehand)
     case Continuously:
         dc1394_capture_setup(dc_camera,buffer_len,DC1394_CAPTURE_FLAGS_DEFAULT);
+        dc1394_feature_set_power(dc_camera, DC1394_FEATURE_TRIGGER, DC1394_OFF);
         dc1394_video_set_transmission(dc_camera,DC1394_ON);
         break;
     default:
@@ -229,13 +252,42 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
 // retrieve a frame from the camera
 bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
 {
+timeval tim;
+             gettimeofday(&tim, NULL);
+             double t1=tim.tv_sec*1000.0+(tim.tv_usec/1000.0);
+
+
+
     bool color = true;
   
     // dequeue a frame using the dc1394-frame tmp_frame
-    dc1394video_frame_t *tmp_frame;
-    dc1394_capture_dequeue(dc_camera, DC1394_CAPTURE_POLICY_WAIT, &tmp_frame );
+    dc1394video_frame_t *tmp_frame=NULL;
+
+std::cerr << "now trying to dequeue\n";
+gettimeofday(&tim, NULL);
+             double tbd=tim.tv_sec*1000.0+(tim.tv_usec/1000.0);
+
+while(DC1394_SUCCESS!=dc1394_capture_dequeue(dc_camera, DC1394_CAPTURE_POLICY_WAIT, &tmp_frame ))
+{ std::cerr << "failed to dequeue\n";
+	usleep(1000);}
+
+//dc1394feature_t feature = DC1394_FEATURE_SHUTTER;
+//uint value;
+//dc1394_feature_get_value(dc_camera, feature , &value);
+
+//std::cerr << "exposure is at " << value << "\n";
+
+gettimeofday(&tim, NULL);
+             double tad=tim.tv_sec*1000.0+(tim.tv_usec/1000.0);
+std::cerr << "the DEqueuing took " << tad-tbd << " ms\n";
+
+
+std::cerr << "dequeuing succeeded!\n";
+
     std::cerr << tmp_frame->timestamp / 1000<< "\n";
     
+    Frame upsidedown_frame;
+
     if(color)
     {
       // create a new DFKI frame and copy the data from tmp_frame
@@ -245,16 +297,38 @@ bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
       
       // convert the bayer pattern image to RGB
 	  //camera::Helper::convertBayerToRGB24(tmp_frame->image, test.getImagePtr(), 640, 480, MODE_BAYER_RGGB);
-      filter::Frame2RGGB::process(tmp,frame);
+      filter::Frame2RGGB::process(tmp,upsidedown_frame);
     }
     else
     {
-      frame.init(image_size_.width, image_size_.height, data_depth, MODE_BAYER_RGGB, hdr_enabled);
-      frame.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
+      upsidedown_frame.init(image_size_.width, image_size_.height, data_depth, MODE_BAYER_RGGB, hdr_enabled);
+      upsidedown_frame.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
     }
     
+    frame.init(image_size_.width, image_size_.height, data_depth, MODE_RGB, hdr_enabled);
+    
+    cv::Mat correctImageMat = rotateImage(upsidedown_frame.convertToCvMat(),180);
+
+    cvtColor(correctImageMat, correctImageMat, CV_BGR2RGB);
+
+    frame.setImage((const char *)correctImageMat.data, tmp_frame->size[0] * tmp_frame->size[1]*3);
+
+gettimeofday(&tim, NULL);
+             double tbe=tim.tv_sec*1000.0+(tim.tv_usec/1000.0);
+
     // re-queue the frame previously used for dequeueing
     dc1394_capture_enqueue(dc_camera,tmp_frame);
+gettimeofday(&tim, NULL);
+             double tae=tim.tv_sec*1000.0+(tim.tv_usec/1000.0);
+std::cerr << "the ENqueuing took " << tae-tbe << " ms\n";
+
+
+
+gettimeofday(&tim, NULL);
+             double t2=tim.tv_sec*1000.0+(tim.tv_usec/1000.0);
+
+std::cerr << "the whole retrieval took " << t2-t1 << " ms\n";
+
 }
 
 // sets the frame size, mode, color depth and whether frames should be resized
@@ -452,6 +526,10 @@ bool CamFireWire::setAttrib(const double_attrib::CamAttrib attrib, const double 
             framerate = DC1394_FRAMERATE_60;
         else if (value==15)
             framerate = DC1394_FRAMERATE_15;
+	else if (value==8)
+	    framerate = DC1394_FRAMERATE_7_5;
+        else if (value==4)
+	    framerate = DC1394_FRAMERATE_3_75;
         else
             throw std::runtime_error("Framerate not supported! Use 15, 30 or 60 fps.");
 

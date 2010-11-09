@@ -13,6 +13,11 @@
 #include "./filter/frame2rggb.h"
 #include <cv.h>
 
+namespace cv
+{
+Mat rotateImage(const Mat& source, double angle);
+}
+
 namespace camera
 {
 class CamFireWire : public CamInterface
