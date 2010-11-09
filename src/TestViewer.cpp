@@ -57,7 +57,9 @@ void plotCameras ( std::vector<CamInfo> &cam_infos)
 
 int main(int argc, char**argv)
 {
-    bool stereo = false;
+    std::cerr << "argv[1] = " << argv[1] << std::endl;
+
+    bool stereo = true;
 
     Frame left_frame;
     Frame right_frame;
@@ -105,7 +107,7 @@ int main(int argc, char**argv)
 
     std::cerr << "c1" << std::endl;   
 
-    left_cam.open(cam_infos[0], Master);
+    left_cam.open(cam_infos[1], Master);
     std::cerr << "c2" << std::endl;
     left_cam.setAttrib(camera::int_attrib::IsoSpeed, 400);
     std::cerr << "c3" << std::endl;
@@ -114,7 +116,7 @@ int main(int argc, char**argv)
 
     if(stereo) 
     {
-      if(!right_cam.open(cam_infos[1], Monitor))
+      if(!right_cam.open(cam_infos[0], Monitor))
       {
 	left_cam.setAttrib(camera::double_attrib::FrameRate, 15);
 	right_cam.setAttrib(camera::double_attrib::FrameRate, 15);
@@ -146,23 +148,24 @@ std::cerr << "b" << std::endl;
     left_cam.setFrameSettings(fs, MODE_BAYER_RGGB, 8, false);
     left_cam.setAttrib(int_attrib::GainValue, 16);
     left_cam.setAttrib(enum_attrib::GammaToOn);
-    left_cam.setAttrib(int_attrib::ExposureValue, 150);
+    left_cam.setAttrib(int_attrib::ExposureValue, 1500);
     left_cam.setAttrib(int_attrib::WhitebalValueBlue, 580);
     left_cam.setAttrib(int_attrib::WhitebalValueRed, 650);
     left_cam.setAttrib(int_attrib::AcquisitionFrameCount, 200);
-    //left_cam.setAttrib(enum_attrib::ExposureModeToManual);
-left_cam.setAttrib(enum_attrib::ExposureModeToAuto);
+    left_cam.setAttrib(enum_attrib::ExposureModeToManual);
+    //left_cam.setAttrib(enum_attrib::ExposureModeToAuto);
 
     if(stereo)
     {
         right_cam.setFrameSettings(fs, MODE_BAYER_RGGB, 8, false);
         right_cam.setAttrib(int_attrib::GainValue, 16);
         right_cam.setAttrib(enum_attrib::GammaToOn);
-        right_cam.setAttrib(int_attrib::ExposureValue,150);
+        right_cam.setAttrib(int_attrib::ExposureValue,1500);
         right_cam.setAttrib(int_attrib::WhitebalValueBlue, 580);
         right_cam.setAttrib(int_attrib::WhitebalValueRed, 650);
 	right_cam.setAttrib(int_attrib::AcquisitionFrameCount, 200);
-	right_cam.setAttrib(enum_attrib::ExposureModeToManual);
+        right_cam.setAttrib(enum_attrib::ExposureModeToManual);
+	//right_cam.setAttrib(enum_attrib::ExposureModeToAuto);
 
     }
 
@@ -172,8 +175,8 @@ left_cam.setAttrib(enum_attrib::ExposureModeToAuto);
     gettimeofday(&ts,NULL);
     gettimeofday(&tcurr,NULL);
 
-    left_cam.setAttrib(camera::double_attrib::FrameRate, 15);
-    if(stereo) right_cam.setAttrib(camera::double_attrib::FrameRate, 60);
+    left_cam.setAttrib(camera::double_attrib::FrameRate, 4);
+    if(stereo) right_cam.setAttrib(camera::double_attrib::FrameRate,4);
 
     
     left_camera.clearBuffer();
@@ -203,13 +206,17 @@ time_t rawtime;
 
     mkdir(path, 0777);    
     
+//	left_cam.grab(SingleFrame, 3);
+//	if(stereo) right_cam.grab(SingleFrame, 3);
+cvWaitKey(500);
            left_cam.grab(Continuously, 20);
 	    if(stereo)   right_cam.grab(Continuously, 20);
+cvWaitKey(500);
     
     for(int i = 0 ; i< 10000 ; i++)
     {
-    //  left_camera.clearBuffer();
-    //if(stereo) right_camera.clearBuffer();
+//      left_camera.clearBuffer();
+  //  if(stereo) right_camera.clearBuffer();
 
 
 	uint32_t val;
@@ -219,14 +226,14 @@ time_t rawtime;
 	//std::cerr << "get reg = " << dc1394_get_control_register(left_camera.dc_camera, 0x0834, &val);
 	//printf("value = %x",val);
 	
-	      // left_cam.grab(SingleFrame, 2);
-	       
+	    //   left_cam.grab(SingleFrame, 2);
+	    //  if(stereo) right_cam.grab(SingleFrame,2); 
 	
 
 
 	
     std::cerr << "retrieving..." << std::endl;
-        cvWaitKey(1);
+        cvWaitKey(10);
 	left_camera.retrieveFrame(left_frame,0);
 	if(stereo) right_camera.retrieveFrame(right_frame,0);;
 	       // cvWaitKey(50);
@@ -234,6 +241,9 @@ time_t rawtime;
 	imshow("left",left_frame.convertToCvMat());
 	if(stereo) imshow("right", right_frame.convertToCvMat());
 	
+
+	
+
 	//cv::VideoWriter *vw = new cv::VideoWriter("~/test.avi", 0, 15, cv::Size(640, 480), true);
 	
 	//std::cerr << "video writer open = " << vw->isOpened() << std::endl;
@@ -254,12 +264,12 @@ std::cerr << "t1 = " << t1 << std::endl;
 	
 	char *filename = new char[100];
 	sprintf(filename, "%s/left%08d_ts%13ld.pgm",path, i, t1);
-	cv::imwrite(filename,left_frame.convertToCvMat());
+	//cv::imwrite(filename,left_frame.convertToCvMat());
 	
 	if(stereo)
 {
 	sprintf(filename, "%s/right%08d.pgm",path,i);
-	cv::imwrite(filename,right_frame.convertToCvMat());
+	//cv::imwrite(filename,right_frame.convertToCvMat());
 }	
 	
 	if(cvWaitKey(2) != -1) {total_frames = i; break;}	
