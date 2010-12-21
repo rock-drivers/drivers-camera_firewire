@@ -272,6 +272,7 @@ gettimeofday(&tim, NULL);
 while(DC1394_SUCCESS!=dc1394_capture_dequeue(dc_camera, DC1394_CAPTURE_POLICY_WAIT, &tmp_frame ))
 { std::cerr << "failed to dequeue\n";
 	usleep(1000);}
+	
 
 //dc1394feature_t feature = DC1394_FEATURE_SHUTTER;
 //uint value;
@@ -286,7 +287,7 @@ std::cerr << "the DEqueuing took " << tad-tbd << " ms\n";
 
 std::cerr << "dequeuing succeeded!\n";
 
-    std::cerr << tmp_frame->timestamp / 1000<< "\n";
+    std::cerr << "timestamp: " << tmp_frame->timestamp / 1000<< "\n";
     
     Frame upsidedown_frame;
 
