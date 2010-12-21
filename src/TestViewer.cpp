@@ -31,10 +31,8 @@
 #include <highgui.h>
 #include <cv.h>
 #include "CamFireWire.h"
-//#include "../../camera_avt_guppy/src/AVT_Guppy.h"
 #include <libraw1394/raw1394.h>
 #include <dc1394/dc1394.h>
-//#include <curses.h>
 #include <sys/stat.h>
 
 using namespace camera;
@@ -68,71 +66,44 @@ int main(int argc, char**argv)
     //frame_size_t size(752,480);
     frame_size_t size(640,480);
 
-    
     left_frame.init(size.width,size.height,3,MODE_BAYER_RGGB,false);
     if(stereo) right_frame.init(size.width,size.height,3,MODE_BAYER_RGGB,false);
-    
-    std::cerr << 1;
-    
+        
     // create a new firewire bus device
     dc1394_t *dc_device = dc1394_new();
-    
-        std::cerr << 2;
 
-    
     CamFireWire left_camera;
-    std::cerr << "left cam created\n";
     left_camera.setDevice(dc_device);
     left_camera.cleanup();
     
     CamFireWire right_camera;
-    std::cerr << "right cam created\n";
     right_camera.setDevice(dc_device);
 
-
-    //left_camera.cleanup();
     CamInterface &left_cam = left_camera;
-        std::cerr << "left cam linked\n";
-
     CamInterface &right_cam = right_camera;
-
-    std::cerr << "interfaces created";
     
     //find and display all cameras
     std::vector<CamInfo> cam_infos ;
     left_cam.listCameras(cam_infos);
-        std::cerr << "c0" << std::endl;   
-    std::cerr << "cam.isOpen = " << left_cam.isOpen() << std::endl;
-        std::cerr << "c1" << std::endl;   
-    cvWaitKey(100);
-
-    std::cerr << "c1" << std::endl;   
 
     left_cam.open(cam_infos[1], Master);
-    std::cerr << "c2" << std::endl;
     left_cam.setAttrib(camera::int_attrib::IsoSpeed, 400);
-    std::cerr << "c3" << std::endl;
-	left_cam.setAttrib(camera::double_attrib::FrameRate, 15);        
-    std::cerr << "c4" << std::endl;
+    left_cam.setAttrib(camera::double_attrib::FrameRate, 15);        
 
     if(stereo) 
     {
-      if(!right_cam.open(cam_infos[0], Monitor))
-      {
-	left_cam.setAttrib(camera::double_attrib::FrameRate, 15);
-	right_cam.setAttrib(camera::double_attrib::FrameRate, 15);
-	left_cam.close();
-	right_cam.close();
-	left_cam.open(cam_infos[0], Master);
-	right_cam.open(cam_infos[1], Monitor);
-	right_cam.setAttrib(camera::int_attrib::IsoSpeed, 400);
-      }
+        if(!right_cam.open(cam_infos[0], Monitor))
+        {
+	    left_cam.setAttrib(camera::double_attrib::FrameRate, 15);
+	    right_cam.setAttrib(camera::double_attrib::FrameRate, 15);
+	    left_cam.close();
+	    right_cam.close();
+	    left_cam.open(cam_infos[0], Master);
+	    right_cam.open(cam_infos[1], Monitor);
+	    right_cam.setAttrib(camera::int_attrib::IsoSpeed, 400);
+        }
     }
 
-    std::cerr << "c" << std::endl;
-
-    cvWaitKey(100);
-    std::cerr << "cam.isOpen = " << left_cam.isOpen() << std::endl;
     frame_size_t fs;
   
     fs.height = 480;
@@ -141,10 +112,6 @@ int main(int argc, char**argv)
     if(stereo) cv::namedWindow("right",1);
     cvMoveWindow("left",10,10);
     if(stereo) cvMoveWindow("right",800,10);
-
-std::cerr << "b" << std::endl;
-
-    cvWaitKey(100);
 
     left_cam.setFrameSettings(fs, MODE_BAYER_RGGB, 8, false);
     left_cam.setAttrib(int_attrib::GainValue, 16);
@@ -170,7 +137,6 @@ std::cerr << "b" << std::endl;
 
     }
 
-    cvWaitKey(50);
     timeval ts, te, tcurr, tprev;
     
     gettimeofday(&ts,NULL);
@@ -179,101 +145,49 @@ std::cerr << "b" << std::endl;
     left_cam.setAttrib(camera::double_attrib::FrameRate, 4);
     if(stereo) right_cam.setAttrib(camera::double_attrib::FrameRate,4);
 
-    
     left_camera.clearBuffer();
     if(stereo) right_camera.clearBuffer();
     
     int total_frames = 0;
-    
-    //left_cam.grab(camera::Continuously, 10);
-    //right_cam.grab(camera::Continuously, 10);
-    
-    	   //    left_cam.grab(SingleFrame, 2);
-
-            cvWaitKey(500);
-
-std::cerr << "a" << std::endl;
 	
-time_t rawtime;
-  tm * ptm;
+    time_t rawtime;
+    tm * ptm;
 
-  time ( &rawtime );
+    time ( &rawtime );
 
-  ptm = gmtime ( &rawtime );
+    ptm = gmtime ( &rawtime );
 
     char path[100];
     sprintf(path, "./started_at_%d_%02d_%02d_%02dh%02dm%02ds", 1900+ptm->tm_year, 1+ptm->tm_mon, ptm->tm_mday, 2+ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
-    std::cerr << "path = " << path << std::endl;
 
     mkdir(path, 0777);    
     
-//	left_cam.grab(SingleFrame, 3);
-//	if(stereo) right_cam.grab(SingleFrame, 3);
-cvWaitKey(500);
-           left_cam.grab(Continuously, 20);
-	    if(stereo)   right_cam.grab(Continuously, 20);
-cvWaitKey(500);
+    left_cam.grab(Continuously, 20);
+    if(stereo)   right_cam.grab(Continuously, 20);
     
     for(int i = 0 ; i< 10000 ; i++)
     {
-//      left_camera.clearBuffer();
-  //  if(stereo) right_camera.clearBuffer();
-
-
 	uint32_t val;
-	//dc1394_set_control_register(left_camera.dc_camera, 0x0834, 0x82000001);
-	//	dc1394_set_control_register(right_camera.dc_camera, 0x0834, 0x82000001);
 
-	//std::cerr << "get reg = " << dc1394_get_control_register(left_camera.dc_camera, 0x0834, &val);
-	//printf("value = %x",val);
-	
-	    //   left_cam.grab(SingleFrame, 2);
-	    //  if(stereo) right_cam.grab(SingleFrame,2); 
-	
-
-
-	
-    std::cerr << "retrieving..." << std::endl;
         cvWaitKey(10);
 	left_camera.retrieveFrame(left_frame,0);
 	if(stereo) right_camera.retrieveFrame(right_frame,0);;
-	       // cvWaitKey(50);
 
 	imshow("left",left_frame.convertToCvMat());
 	if(stereo) imshow("right", right_frame.convertToCvMat());
-	
-
-	
-
-	//cv::VideoWriter *vw = new cv::VideoWriter("~/test.avi", 0, 15, cv::Size(640, 480), true);
-	
-	//std::cerr << "video writer open = " << vw->isOpened() << std::endl;
-	
-	//vw << left_frame.convertToCvMat();
-	
-   timeval tim;
-             gettimeofday(&tim, NULL);
-             long t1=tim.tv_sec*1000+(tim.tv_usec/1000);
-
-
-std::cerr << "t1 = " << t1 << std::endl;
-
- 
-
-
-	  
 	
 	char *filename = new char[100];
 	sprintf(filename, "%s/left%08d_ts%13ld.pgm",path, i, t1);
 	//cv::imwrite(filename,left_frame.convertToCvMat());
 	
 	if(stereo)
-{
-	sprintf(filename, "%s/right%08d.pgm",path,i);
-	//cv::imwrite(filename,right_frame.convertToCvMat());
-}	
+        {
+	    sprintf(filename, "%s/right%08d.pgm",path,i);
+	    //cv::imwrite(filename,right_frame.convertToCvMat());
+        }	
 	
-	if(cvWaitKey(2) != -1) {total_frames = i; break;}	
+	if(cvWaitKey(2) != -1) {total_frames = i; break;}
+	
 	tprev=tcurr;
 	gettimeofday(&tcurr,NULL);
         double delta_t = (1000000*tcurr.tv_sec+tcurr.tv_usec - 1000000*tprev.tv_sec-tprev.tv_usec)/1000000.0;
