@@ -52,24 +52,26 @@ bool CamFireWire::cleanup()
     uint32_t val;
     if ( dc1394_video_get_bandwidth_usage(tmp_camera, &val) == DC1394_SUCCESS &&
     dc1394_iso_release_bandwidth(tmp_camera, val) == DC1394_SUCCESS )
-    std::cout << "Succesfully released " << val << " bytes of Bandwidth." << std::endl;
+//    std::cout << "Succesfully released " << val << " bytes of Bandwidth." << std::endl;
     /*if ( dc1394_video_get_iso_channel(tmp_camera, &val) == DC1394_SUCCESS &&
     dc1394_iso_release_channel(tmp_camera, val) == DC1394_SUCCESS )
     std::cout << "Succesfully released ISO channel #" << val << "." << std::endl;
 */
     //dc1394_camera_free(tmp_camera);
-    std::cerr << "list->num = " << list->num << std::endl;
+ //   std::cerr << "list->num = " << list->num << std::endl;
     if(list->num > 1)
     {
       tmp_camera = dc1394_camera_new(dc_device, list->ids[1].guid);
       dc1394_reset_bus(tmp_camera);
       if ( dc1394_video_get_bandwidth_usage(tmp_camera, &val) == DC1394_SUCCESS &&
       dc1394_iso_release_bandwidth(tmp_camera, val) == DC1394_SUCCESS )
-      std::cout << "Successfully released " << val << " bytes of Bandwidth." << std::endl;
+   //   std::cout << "Successfully released " << val << " bytes of Bandwidth." << std::endl;
       if ( dc1394_video_get_iso_channel(tmp_camera, &val) == DC1394_SUCCESS &&
       dc1394_iso_release_channel(tmp_camera, val) == DC1394_SUCCESS )
-      std::cout << "Successfully released ISO channel #" << val << "." << std::endl;
-    }
+      {
+     // std::cout << "Successfully released ISO channel #" << val << "." << std::endl;
+     }    
+}
   //  dc1394_camera_free(tmp_camera);
 }
 
@@ -113,7 +115,7 @@ int CamFireWire::listCameras(std::vector<CamInfo>&cam_infos)const
         cam_info.unique_id = tmp_camera->guid;
         cam_info.display_name = tmp_camera->model;
         cam_info.interface_type = InterfaceFirewire;
-        showCamInfo(cam_info);
+       // showCamInfo(cam_info);
 
 	// add the current cam_info to the vector cam_infos and release the temporary camera
         cam_infos.push_back(cam_info);
@@ -179,7 +181,7 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
                                      " grab mode!");
         else
 	{
-	    std::cerr << "returning true...";
+	 //   std::cerr << "returning true...";
             return true;
 	}
     }
@@ -201,7 +203,7 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
         if (!dc_camera->one_shot_capable)
             throw std::runtime_error("Camera is not one-shot capable!");
       
-	std::cerr << "setting one shot register...";
+	//std::cerr << "setting one shot register...";
 //	uint32_t t1;
 //	std::cerr << dc1394_get_control_register(dc_camera,0x834, &t1) << " ";
 //	std::cerr << "intena delay = " << t1 << std::endl;
@@ -214,13 +216,13 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
 	
 		//dc1394_set_control_register(dc_camera, 0x830, 0x82000000); //set to trigger_mode_0
 //dc1394_set_control_register(dc_camera,0x61c, 0x80000000); //this triggers the one-shot
-		std::cerr << "now setting external trigger power to on" << std::endl;
+	//	std::cerr << "now setting external trigger power to on" << std::endl;
 		//dc1394_external_trigger_set_power(dc_camera, DC1394_ON);
 		dc1394_feature_set_power(dc_camera, DC1394_FEATURE_TRIGGER, DC1394_ON); //for exposure test
-		std::cerr << "done" << std::endl;
+	//	std::cerr << "done" << std::endl;
 		dc1394_camera_set_broadcast(dc_camera, DC1394_FALSE);
 
-	std::cerr << "done";
+	//std::cerr << "done";
         break;
 	
     // grab N frames (N previously defined by setting AcquisitionFrameCount
@@ -232,7 +234,7 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
 	//start transmitting frames
 	//dc1394_video_set_transmission(dc_camera,DC1394_ON);
 	dc1394_set_control_register(dc_camera,0x614, 0);
-	std::cerr << "multi-shot count = " << multi_shot_count << std::endl;
+	//std::cerr << "multi-shot count = " << multi_shot_count << std::endl;
 	dc1394_set_control_register(dc_camera,0x61c, 0x40000000 + multi_shot_count);
 
         break;
@@ -265,7 +267,7 @@ timeval tim;
     // dequeue a frame using the dc1394-frame tmp_frame
     dc1394video_frame_t *tmp_frame=NULL;
 
-std::cerr << "now trying to dequeue\n";
+//std::cerr << "now trying to dequeue\n";
 gettimeofday(&tim, NULL);
              double tbd=tim.tv_sec*1000.0+(tim.tv_usec/1000.0);
 
@@ -282,12 +284,15 @@ while(DC1394_SUCCESS!=dc1394_capture_dequeue(dc_camera, DC1394_CAPTURE_POLICY_WA
 
 gettimeofday(&tim, NULL);
              double tad=tim.tv_sec*1000.0+(tim.tv_usec/1000.0);
-std::cerr << "the DEqueuing took " << tad-tbd << " ms\n";
+//std::cerr << "the DEqueuing took " << tad-tbd << " ms\n";
 
 
-std::cerr << "dequeuing succeeded!\n";
+//std::cerr << "dequeuing succeeded!\n";
 
-    std::cerr << "timestamp: " << tmp_frame->timestamp / 1000<< "\n";
+
+ std::cerr << "timestamp: " << tmp_frame->timestamp / 1000<< "\n";
+//    std::cerr << tmp_frame->timestamp / 1000<< "\n";
+
     
     Frame upsidedown_frame;
 
@@ -323,14 +328,14 @@ gettimeofday(&tim, NULL);
     dc1394_capture_enqueue(dc_camera,tmp_frame);
 gettimeofday(&tim, NULL);
              double tae=tim.tv_sec*1000.0+(tim.tv_usec/1000.0);
-std::cerr << "the ENqueuing took " << tae-tbe << " ms\n";
+//std::cerr << "the ENqueuing took " << tae-tbe << " ms\n";
 
 
 
 gettimeofday(&tim, NULL);
              double t2=tim.tv_sec*1000.0+(tim.tv_usec/1000.0);
 
-std::cerr << "the whole retrieval took " << t2-t1 << " ms\n";
+//std::cerr << "the whole retrieval took " << t2-t1 << " ms\n";
 
 }
 
@@ -346,7 +351,7 @@ bool CamFireWire::setFrameSettings(const frame_size_t size,
     switch (mode)
     {
     case MODE_BAYER_RGGB:
-        std::cerr << "set mode " << dc1394_video_set_mode(dc_camera, DC1394_VIDEO_MODE_640x480_MONO8)<< std::endl;
+        dc1394_video_set_mode(dc_camera, DC1394_VIDEO_MODE_640x480_MONO8);
 	data_depth = 8;
         break;
     default:
@@ -374,7 +379,7 @@ bool CamFireWire::isReadyForOneShot()
 // set integer-valued attributes
 bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
 {
-    std::cerr << "setting int attrib...";
+    //std::cerr << "setting int attrib...";
     // the feature (attribute) we want to set
     dc1394feature_t feature;
     
@@ -423,9 +428,9 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
         default:
             throw std::runtime_error("Unsupported Iso Speed!");
         };
-	std::cerr << "now setting iso speed...";
+	//std::cerr << "now setting iso speed...";
         dc1394_video_set_iso_speed(dc_camera, speed);
-	std::cerr << "done" << std::endl;
+	//std::cerr << "done" << std::endl;
         break;
 	
     // set the number of frames to capture in multi-shot mode
