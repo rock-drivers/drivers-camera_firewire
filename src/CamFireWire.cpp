@@ -246,8 +246,13 @@ bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
 
     frame.setImage((const char *)correctImageMat.data, tmp_frame->size[0] * tmp_frame->size[1]*3);
 
+	// set the frame's timestamps (secs and usecs)
+	frame.time.fromMicroseconds(tmp_frame->timestamp);
+	
     // re-queue the frame previously used for dequeueing
     dc1394_capture_enqueue(dc_camera,tmp_frame);
+	
+	
 }
 
 // sets the frame size, mode, color depth and whether frames should be resized
@@ -483,5 +488,10 @@ bool CamFireWire::clearBuffer()
         }
     }
 } // end clearBuffer
+
+bool undistortFrame(base::samples::frame::Frame &in, base::samples::frame::Frame &out, CalibrationData calib)
+{
+    // use opencv to undistort the frame using the given calibration data set
+}
 
 } // end namespace camera

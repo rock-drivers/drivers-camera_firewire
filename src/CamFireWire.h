@@ -10,6 +10,7 @@
 
 #include "camera_interface/CamInterface.h"
 #include "./filter/frame2rggb.h"
+#include "./cam_fw_types.h"
 
 struct __dc1394_camera;
 typedef __dc1394_camera dc1394camera_t;
@@ -31,6 +32,7 @@ public:
     bool prepareQueueForGrabbing(const int queue_len);
     bool grab(const GrabMode mode, const int buffer_len);
     bool retrieveFrame(base::samples::frame::Frame &frame,const int timeout);
+    bool undistortFrame(base::samples::frame::Frame &in, base::samples::frame::Frame &out, CalibrationData calib);
     bool setFrameSettings(const base::samples::frame::frame_size_t size,
                           const base::samples::frame::frame_mode_t mode,
                           const  uint8_t color_depth,
