@@ -1,5 +1,5 @@
 <package>
-  <description brief="General camera interface for all types of camereas.">
+  <description brief="firewire camera driver (tested for AVT Guppy cam)">
   </description>
   <author>Christopher Gaudig/christopher.gaudig@dfki.de</author>
   <license></license>
@@ -7,8 +7,7 @@
   <logo>http://</logo>
   <rosdep name="opencv">
   <rosdep name="dc1394" />
-  <depend package="base" />
-  <depend package="drivers/camera_interface" />
+  <depend package="base/types" />
   <versioncontrol type="git" url="" />
   <export>
     <cpp cflags="" lflags="" />
