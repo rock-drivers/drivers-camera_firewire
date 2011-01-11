@@ -1,6 +1,6 @@
 SET(module_name ${PROJECT_NAME})
 add_library(${PROJECT_NAME} SHARED CamFireWire.cpp filter/frame2rggb.cpp)
-target_link_libraries(${PROJECT_NAME} rt base dc1394 camera_firewire camera_interface)
+target_link_libraries(${PROJECT_NAME} rt base dc1394 camera_firewire camera_interface cv)
 
 install(TARGETS ${PROJECT_NAME} 
 		RUNTIME DESTINATION bin
