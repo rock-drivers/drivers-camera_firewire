@@ -8,6 +8,7 @@
   <rosdep name="opencv">
   <rosdep name="dc1394" />
   <depend package="base/types" />
+  <depend package="drivers/camera_interface" />
   <versioncontrol type="git" url="" />
   <export>
     <cpp cflags="" lflags="" />
