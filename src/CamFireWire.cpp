@@ -226,11 +226,7 @@ bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
             return false;
         usleep(1000);
     }
-	
-    std::cerr << "timestamp: " << tmp_frame->timestamp / 1000<< "\n";
     
-    Frame upsidedown_frame;
-
     if(color)
     {
         // create a new DFKI frame and copy the data from tmp_frame
@@ -239,27 +235,21 @@ bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
         tmp.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
       
         // convert the bayer pattern image to RGB
-        filter::Frame2RGGB::process(tmp,upsidedown_frame);
+        filter::Frame2RGGB::process(tmp, frame);
     }
     else
     {
-        upsidedown_frame.init(image_size_.width, image_size_.height, data_depth, MODE_BAYER_RGGB, hdr_enabled);
-        upsidedown_frame.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
+        frame.init(image_size_.width, image_size_.height, data_depth, MODE_BAYER_RGGB, hdr_enabled);
+        frame.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
     }
     
-    frame.init(image_size_.width, image_size_.height, data_depth, MODE_RGB, hdr_enabled);
-    cv::Mat correctImageMat = rotateImage(upsidedown_frame.convertToCvMat(),180);
-    cvtColor(correctImageMat, correctImageMat, CV_BGR2RGB);
-
-    frame.setImage((const char *)correctImageMat.data, tmp_frame->size[0] * tmp_frame->size[1]*3);
-
-	// set the frame's timestamps (secs and usecs)
-	frame.time.fromMicroseconds(tmp_frame->timestamp);
+    // set the frame's timestamps (secs and usecs)
+    frame.time.fromMicroseconds(tmp_frame->timestamp);
 	
     // re-queue the frame previously used for dequeueing
-    dc1394_capture_enqueue(dc_camera,tmp_frame);
-	
-	
+    dc1394_capture_enqueue(dc_camera, tmp_frame);
+
+    return true;
 }
 
 // sets the frame size, mode, color depth and whether frames should be resized
