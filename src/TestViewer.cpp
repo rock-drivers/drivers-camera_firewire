@@ -177,7 +177,7 @@ int main(int argc, char**argv)
 	if(stereo) imshow("right", right_frame.convertToCvMat());
 	
 	char *filename = new char[100];
-	sprintf(filename, "%s/left%08d_ts%13ld.pgm",path, i, left_frame.time);
+	sprintf(filename, "%s/left%08d_ts%13ld.pgm",path, i, left_frame.time.toMilliseconds());
 	//cv::imwrite(filename,left_frame.convertToCvMat());
 	
 	if(stereo)
