@@ -214,10 +214,17 @@ bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
     // dequeue a frame using the dc1394-frame tmp_frame
     dc1394video_frame_t *tmp_frame=NULL;
 
-    while(DC1394_SUCCESS!=dc1394_capture_dequeue(dc_camera, DC1394_CAPTURE_POLICY_WAIT, &tmp_frame ))
-    { 
-        std::cerr << "failed to dequeue\n";
-	usleep(1000);
+    int cycle = 0;
+    while(true)
+    {
+        int ret = dc1394_capture_dequeue(dc_camera, DC1394_CAPTURE_POLICY_WAIT, &tmp_frame);
+        if ((ret == DC1394_SUCCESS) && tmp_frame)
+            break;
+        if ((ret == DC1394_SUCCESS) && !tmp_frame)
+            std::cerr << "ret is SUCCESS but tmp_frame is NULL" << std::endl;
+        if (++cycle > timeout)
+            return false;
+        usleep(1000);
     }
 	
     std::cerr << "timestamp: " << tmp_frame->timestamp / 1000<< "\n";
