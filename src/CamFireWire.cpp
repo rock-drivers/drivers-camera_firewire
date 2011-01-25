@@ -202,7 +202,7 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
         throw std::runtime_error("Unknown grab mode!");
     }
     act_grab_mode_ = mode;
-    if (act_grab_mode_ = SingleFrame)
+    if (act_grab_mode_ == SingleFrame)
       act_grab_mode_ = Stop;
 }
 
