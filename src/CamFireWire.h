@@ -45,6 +45,14 @@ public:
     bool clearBuffer();
     bool cleanup();
     bool setDevice(dc1394_t *dev);
+
+    /** Returns the file descriptor that can be used to wait for frames using
+     * select()
+     *
+     * It is valid only after grab() has been called, and only until the
+     * grabbing did not stop
+     */
+    int getFileDescriptor() const;
     
 public:
     dc1394camera_t *dc_camera;

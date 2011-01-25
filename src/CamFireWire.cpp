@@ -491,4 +491,9 @@ bool undistortFrame(base::samples::frame::Frame &in, base::samples::frame::Frame
     // use opencv to undistort the frame using the given calibration data set
 }
 
+int CamFireWire::getFileDescriptor() const
+{
+    return dc1394_capture_get_fileno(dc_camera);
+}
+
 } // end namespace camera
