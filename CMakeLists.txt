@@ -46,15 +46,19 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 # If you create subdirectories within source include headers with subdirectory, i.e. 
 # #include "subdirectory/myheader.h"
 include_directories(${PROJECT_SOURCE_DIR}/src)
-
 include(FindPkgConfig)
+
+pkg_check_modules(DC1394 REQUIRED libdc1394-2)
+include_directories(${DC1394_INCLUDE_DIRS})
+link_directories(${DC1394_LIBRARY_DIRS})
+
 pkg_check_modules(CAM_INTERFACE REQUIRED "camera_interface")
 include_directories(${CAM_INTERFACE_INCLUDE_DIRS})
-link_directories(${CAM_INTERFACE_LIBDIR})
+link_directories(${CAM_INTERFACE_LIBRARY_DIRS})
 
 pkg_check_modules(OPENCV REQUIRED "opencv")
 include_directories(${OPENCV_INCLUDE_DIRS})
-link_directories(${OPENCV_LIBDIR})
+link_directories(${OPENCV_LIBRARY_DIRS})
 
 ##### End specification of build directory ##############################
 
