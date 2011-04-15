@@ -242,10 +242,10 @@ bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
         frame.init(image_size_.width, image_size_.height, data_depth, MODE_BAYER_RGGB, hdr_enabled);
         frame.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
     }
-    
+
     // set the frame's timestamps (secs and usecs)
-    frame.time.fromMicroseconds(tmp_frame->timestamp);
-	
+    frame.time = base::Time::fromMicroseconds(tmp_frame->timestamp);
+
     // re-queue the frame previously used for dequeueing
     dc1394_capture_enqueue(dc_camera, tmp_frame);
 
