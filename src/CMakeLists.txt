@@ -1,6 +1,6 @@
 add_library(${PROJECT_NAME} SHARED CamFireWire.cpp filter/frame2rggb.cpp)
 target_link_libraries(${PROJECT_NAME} rt ${DC1394_LIBRARIES}
-    ${CAM_INTERFACE_LIBRARIES} ${OPENCV_LIBRARIES})
+    ${CAM_INTERFACE_LIBRARIES})
 
 install(TARGETS ${PROJECT_NAME} 
 		RUNTIME DESTINATION bin
