@@ -7,7 +7,9 @@ install(TARGETS ${PROJECT_NAME}
 		LIBRARY DESTINATION lib
     )
 
+if (TEST_ENABLED)
 add_executable(TestViewer TestViewer.cpp)   
 target_link_libraries(TestViewer ${OPENCV_LIBRARIES} ${DC1394_LIBRARIES}
     camera_firewire)
+endif()
 

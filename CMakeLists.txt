@@ -56,9 +56,11 @@ pkg_check_modules(CAM_INTERFACE REQUIRED "camera_interface")
 include_directories(${CAM_INTERFACE_INCLUDE_DIRS})
 link_directories(${CAM_INTERFACE_LIBRARY_DIRS})
 
+if (TEST_ENABLED)
 pkg_check_modules(OPENCV REQUIRED "opencv")
 include_directories(${OPENCV_INCLUDE_DIRS})
 link_directories(${OPENCV_LIBRARY_DIRS})
+endif()
 
 ##### End specification of build directory ##############################
 
