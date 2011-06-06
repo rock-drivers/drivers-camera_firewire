@@ -115,25 +115,30 @@ int main(int argc, char**argv)
 
     left_cam.setFrameSettings(fs, MODE_BAYER_RGGB, 8, false);
     left_cam.setAttrib(int_attrib::GainValue, 16);
-    left_cam.setAttrib(enum_attrib::GammaToOn);
-    left_cam.setAttrib(int_attrib::ExposureValue, 300);
-    left_cam.setAttrib(int_attrib::WhitebalValueBlue, 580);
-    left_cam.setAttrib(int_attrib::WhitebalValueRed, 650);
+    left_cam.setAttrib(enum_attrib::GammaToOff);
+    left_cam.setAttrib(int_attrib::WhitebalValueBlue, 320); //580);
+    left_cam.setAttrib(int_attrib::WhitebalValueRed, 800); //650);
     left_cam.setAttrib(int_attrib::AcquisitionFrameCount, 200);
     left_cam.setAttrib(enum_attrib::ExposureModeToManual);
     //left_cam.setAttrib(enum_attrib::ExposureModeToAuto);
+    //left_cam.setAttrib(enum_attrib::ExposureModeToAutoOnce);
+    left_cam.setAttrib(int_attrib::ExposureValue, 3000); // 300
+    left_cam.setAttrib(enum_attrib::WhitebalModeToAuto);
 
     if(stereo)
     {
         right_cam.setFrameSettings(fs, MODE_BAYER_RGGB, 8, false);
         right_cam.setAttrib(int_attrib::GainValue, 16);
-        right_cam.setAttrib(enum_attrib::GammaToOn);
-        right_cam.setAttrib(int_attrib::ExposureValue,300);
+        right_cam.setAttrib(enum_attrib::GammaToOff);
         right_cam.setAttrib(int_attrib::WhitebalValueBlue, 580);
         right_cam.setAttrib(int_attrib::WhitebalValueRed, 650);
 	right_cam.setAttrib(int_attrib::AcquisitionFrameCount, 200);
         right_cam.setAttrib(enum_attrib::ExposureModeToManual);
 	//right_cam.setAttrib(enum_attrib::ExposureModeToAuto);
+        //right_cam.setAttrib(enum_attrib::ExposureModeToAutoOnce);
+        right_cam.setAttrib(int_attrib::ExposureValue, 3000);
+        right_cam.setAttrib(enum_attrib::WhitebalModeToAuto);
+
 
     }
 
@@ -168,6 +173,8 @@ int main(int argc, char**argv)
     for(int i = 0 ; i< 10000 ; i++)
     {
 	uint32_t val;
+
+        std::cout << "ExposureValue = " << left_camera.getAttrib(camera::int_attrib::ExposureValue) << std::endl; 
 
         cvWaitKey(10);
 	left_camera.retrieveFrame(left_frame,0);

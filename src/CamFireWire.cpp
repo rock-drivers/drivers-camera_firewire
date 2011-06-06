@@ -338,6 +338,29 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
     return false;
 };
 
+int CamFireWire::getAttrib(const int_attrib::CamAttrib attrib)
+{
+    // the feature (attribute) we want to get
+    dc1394feature_t feature;
+
+    // the value we want to get from the cam
+    uint32_t value;
+
+    switch(attrib)
+    {
+        // get the current exposure value (shutter open time) from the cam
+        case int_attrib::ExposureValue:
+            feature = DC1394_FEATURE_SHUTTER;
+            dc1394_feature_get_value(dc_camera, feature , &value);
+            return (int)value;
+            break;
+
+        // attribute unknown or not supported (yet)
+        default:
+            throw std::runtime_error("Unknown attribute!");
+    }
+}
+
 // set enum attributes
 bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
 {
@@ -382,6 +405,13 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
 	dc1394_feature_set_mode(dc_camera, feature, mode);
         break;
 
+    // tell camera to do a single auto-exposure and then keep the setting fixed
+    case enum_attrib::ExposureModeToAutoOnce:
+        feature = DC1394_FEATURE_SHUTTER;
+        mode = DC1394_FEATURE_MODE_ONE_PUSH_AUTO;
+        dc1394_feature_set_mode(dc_camera, feature, mode);
+        break;
+
     // turn auto gain on
     case enum_attrib::GainModeToAuto:
         feature = DC1394_FEATURE_GAIN;
@@ -395,6 +425,27 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
         mode = DC1394_FEATURE_MODE_MANUAL;
 	dc1394_feature_set_mode(dc_camera, feature, mode);
         break;
+
+    // turn auto white balance on
+    case enum_attrib::WhitebalModeToAuto:
+        feature = DC1394_FEATURE_WHITE_BALANCE;
+        std::cerr << "whitebal feature = " << feature << std::endl;
+        //feature = 419;
+        mode = DC1394_FEATURE_MODE_ONE_PUSH_AUTO;
+        std::cout << "setting whitebal register " << feature << " to " << mode << std::endl;
+	dc1394_feature_set_mode(dc_camera, feature, mode);
+        dc1394_feature_set_power(dc_camera, feature, DC1394_OFF);
+        dc1394bool_t result;
+        uint32_t r;
+        dc1394_get_register(dc_camera, 0x404, &r);
+        std::cout << "reg 404 contains " << r << std::endl;
+        dc1394feature_mode_t m;
+        dc1394_feature_get_mode(dc_camera, feature, &m);
+        dc1394_feature_is_present(dc_camera, feature, &result);
+        //dc1394_feature_has_auto_mode(dc_camera, feature, &result);
+        std::cout << "awb is there? = " << result << " , mode = "<< m << std::endl; 
+        break;
+
 
     // attribute unknown or not supported (yet)
     default:
@@ -451,7 +502,7 @@ bool CamFireWire::isFrameAvailable()
 
 bool CamFireWire::clearBuffer()
 {
-    dc1394video_frame_t *tmp;
+    dc1394video_frame_t *tmp = 0;
     
     bool endFound = false;
     dc1394error_t err;

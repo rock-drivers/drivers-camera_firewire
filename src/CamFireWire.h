@@ -38,6 +38,7 @@ public:
                           const  uint8_t color_depth,
                           const bool resize_frames);
     bool isFrameAvailable();
+    int getAttrib(const int_attrib::CamAttrib attrib);
     bool setAttrib(const int_attrib::CamAttrib attrib,const int value);
     bool setAttrib(const enum_attrib::CamAttrib attrib);
     bool setAttrib(const double_attrib::CamAttrib attrib, const double value);
