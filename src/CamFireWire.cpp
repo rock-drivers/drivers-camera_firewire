@@ -47,9 +47,13 @@ bool CamFireWire::cleanup()
 
 CamFireWire::~CamFireWire()
 {
-    dc1394_iso_release_all(dc_camera);
-    dc1394_camera_free(dc_camera);
-    dc1394_free(dc_device);
+    if (dc_camera)
+    {
+	dc1394_iso_release_all(dc_camera);
+	dc1394_camera_free(dc_camera);
+    }
+    if (dc_device)
+	dc1394_free(dc_device);
 }
 
 bool CamFireWire::setDevice(dc1394_t *dev)
@@ -62,6 +66,9 @@ int CamFireWire::listCameras(std::vector<CamInfo>&cam_infos)const
 {
     dc1394camera_list_t *list;
     dc1394error_t err;
+
+    if (!dc_device)
+	return 0;
 
     // get list of available cameras
     err = dc1394_camera_enumerate (dc_device, &list);
@@ -99,6 +106,9 @@ bool CamFireWire::open(const CamInfo &cam,const AccessMode mode)
 {
     dc1394camera_list_t *list;
     dc1394error_t err;
+
+    if (!dc_device)
+	return false;
 
     // get list of available cameras
     err = dc1394_camera_enumerate (dc_device, &list);
@@ -139,6 +149,9 @@ bool CamFireWire::close()
 // start grabbing using the given GrabMode mode and write frame into a buffer of lenght buffer_len
 bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
 {
+    if (!dc_camera)
+	return false;
+
     //check if someone tries to change the grab mode during grabbing
     if (act_grab_mode_ != Stop && mode != Stop)
     {
@@ -192,6 +205,9 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
 // retrieve a frame from the camera
 bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
 {
+    if (!dc_camera)
+	return false;
+
     bool color = true;
   
     // dequeue a frame using the dc1394-frame tmp_frame
@@ -241,6 +257,9 @@ bool CamFireWire::setFrameSettings(const frame_size_t size,
                                    const  uint8_t color_depth,
                                    const bool resize_frames)
 {
+    if (!dc_camera)
+	return false;
+
     dc1394video_modes_t vmst;
     dc1394_video_get_supported_modes(dc_camera,&vmst);
 
@@ -261,6 +280,9 @@ bool CamFireWire::setFrameSettings(const frame_size_t size,
 // (should) return true if the camera is ready for the next one-shot capture
 bool CamFireWire::isReadyForOneShot()
 {
+    if (!dc_camera)
+	return false;
+
     uint32_t one_shot;
     
     // get the camera's one-shot register
@@ -275,6 +297,9 @@ bool CamFireWire::isReadyForOneShot()
 // set integer-valued attributes
 bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
 {
+    if (!dc_camera)
+	return false;
+
     // the feature (attribute) we want to set
     dc1394feature_t feature;
     
@@ -340,6 +365,9 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
 
 int CamFireWire::getAttrib(const int_attrib::CamAttrib attrib)
 {
+    if (!dc_camera)
+	return false;
+
     // the feature (attribute) we want to get
     dc1394feature_t feature;
 
@@ -364,6 +392,9 @@ int CamFireWire::getAttrib(const int_attrib::CamAttrib attrib)
 // set enum attributes
 bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
 {
+    if (!dc_camera)
+	return false;
+
     // the feature (attribute) we want to set
     dc1394feature_t feature;
     
@@ -458,6 +489,9 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
 // set double-valued attributes
 bool CamFireWire::setAttrib(const double_attrib::CamAttrib attrib, const double value)
 {
+    if (!dc_camera)
+	return false;
+
     // the feature/attribute we want to set
     dc1394feature_t feature;
     
@@ -496,12 +530,18 @@ bool CamFireWire::setAttrib(const double_attrib::CamAttrib attrib, const double 
 // should return true whenever a frame is available
 bool CamFireWire::isFrameAvailable()
 {
+    if (!dc_camera)
+	return false;
+
   dc1394_capture_get_fileno(dc_camera);
-  
+  return false;
 }
 
 bool CamFireWire::clearBuffer()
 {
+    if (!dc_camera)
+	return false;
+
     dc1394video_frame_t *tmp = 0;
     
     bool endFound = false;
@@ -523,10 +563,13 @@ bool CamFireWire::clearBuffer()
 bool undistortFrame(base::samples::frame::Frame &in, base::samples::frame::Frame &out, CalibrationData calib)
 {
     // use opencv to undistort the frame using the given calibration data set
+    return false;
 }
 
 int CamFireWire::getFileDescriptor() const
 {
+    if (!dc_camera)
+	return -1;
     return dc1394_capture_get_fileno(dc_camera);
 }
 
