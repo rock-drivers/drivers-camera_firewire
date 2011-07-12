@@ -29,7 +29,7 @@ public:
     bool open(const CamInfo &cam,const AccessMode mode);
     bool isOpen()const;
     bool close();
-    bool prepareQueueForGrabbing(const int queue_len);
+    //grab() may change the filedescriptor, and mode==Stop closes it
     bool grab(const GrabMode mode, const int buffer_len);
     bool retrieveFrame(base::samples::frame::Frame &frame,const int timeout);
     bool undistortFrame(base::samples::frame::Frame &in, base::samples::frame::Frame &out, CalibrationData calib);
@@ -50,8 +50,8 @@ public:
     /** Returns the file descriptor that can be used to wait for frames using
      * select()
      *
-     * It is valid only after grab() has been called, and only until the
-     * grabbing did not stop
+     * It is valid only after grab() has been called(with mode != Stop),
+     * and only until grab() is called again(for whatever mode)
      */
     int getFileDescriptor() const;
     
