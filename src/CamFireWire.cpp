@@ -520,14 +520,14 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
     case enum_attrib::ExposureModeToAuto:
         feature = DC1394_FEATURE_SHUTTER;
         mode = DC1394_FEATURE_MODE_AUTO;
-	dc1394_feature_set_mode(dc_camera, feature, mode);
+        dc1394_feature_set_mode(dc_camera, feature, mode);
         break;
 
     // turn auto exposure off
     case enum_attrib::ExposureModeToManual:
         feature = DC1394_FEATURE_SHUTTER;
         mode = DC1394_FEATURE_MODE_MANUAL;
-	dc1394_feature_set_mode(dc_camera, feature, mode);
+        dc1394_feature_set_mode(dc_camera, feature, mode);
         break;
 
     // tell camera to do a single auto-exposure and then keep the setting fixed
@@ -541,37 +541,46 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
     case enum_attrib::GainModeToAuto:
         feature = DC1394_FEATURE_GAIN;
         mode = DC1394_FEATURE_MODE_AUTO;
-	dc1394_feature_set_mode(dc_camera, feature, mode);
+        dc1394_feature_set_mode(dc_camera, feature, mode);
         break;
 
     // turn auto gain off
     case enum_attrib::GainModeToManual:
         feature = DC1394_FEATURE_GAIN;
         mode = DC1394_FEATURE_MODE_MANUAL;
-	dc1394_feature_set_mode(dc_camera, feature, mode);
+        dc1394_feature_set_mode(dc_camera, feature, mode);
         break;
 
     // turn auto white balance on
     case enum_attrib::WhitebalModeToAuto:
         feature = DC1394_FEATURE_WHITE_BALANCE;
-        std::cerr << "whitebal feature = " << feature << std::endl;
-        //feature = 419;
-        mode = DC1394_FEATURE_MODE_ONE_PUSH_AUTO;
-        std::cout << "setting whitebal register " << feature << " to " << mode << std::endl;
-	dc1394_feature_set_mode(dc_camera, feature, mode);
-        dc1394_feature_set_power(dc_camera, feature, DC1394_OFF);
-        dc1394bool_t result;
-        uint32_t r;
-        dc1394_get_register(dc_camera, 0x404, &r);
-        std::cout << "reg 404 contains " << r << std::endl;
-        dc1394feature_mode_t m;
-        dc1394_feature_get_mode(dc_camera, feature, &m);
-        dc1394_feature_is_present(dc_camera, feature, &result);
+        mode = DC1394_FEATURE_MODE_AUTO;
+        dc1394_feature_set_mode(dc_camera, feature, mode);
+        
+        //dc1394bool_t result;
+        //uint32_t r;
+        //dc1394_get_register(dc_camera, 0x404, &r);
+        //std::cout << "reg 404 contains " << r << std::endl;
+        //dc1394feature_mode_t m;
+        //dc1394_feature_get_mode(dc_camera, feature, &m);
+        //dc1394_feature_is_present(dc_camera, feature, &result);
         //dc1394_feature_has_auto_mode(dc_camera, feature, &result);
-        std::cout << "awb is there? = " << result << " , mode = "<< m << std::endl; 
+        //std::cout << "awb is there? = " << result << " , mode = "<< m << std::endl; 
         break;
 
-
+    // turn one push auto white balance on
+    case enum_attrib::WhitebalModeToAutoOnce:
+        feature = DC1394_FEATURE_WHITE_BALANCE;
+        mode = DC1394_FEATURE_MODE_ONE_PUSH_AUTO;
+        dc1394_feature_set_mode(dc_camera, feature, mode);
+        break;
+        
+    // turn manual white balance on
+    case enum_attrib::WhitebalModeToManual:
+        feature = DC1394_FEATURE_WHITE_BALANCE;
+        mode = DC1394_FEATURE_MODE_MANUAL;
+        dc1394_feature_set_mode(dc_camera, feature, mode);
+        break;
     // attribute unknown or not supported (yet)
     default:
         throw std::runtime_error("Unknown attribute!");
