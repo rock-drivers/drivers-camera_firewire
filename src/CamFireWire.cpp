@@ -630,14 +630,24 @@ bool CamFireWire::setAttrib(const double_attrib::CamAttrib attrib, const double 
     return false;
 };
 
-// should return true whenever a frame is available
+// returns true whenever a frame is available
 bool CamFireWire::isFrameAvailable()
 {
     if (!dc_camera)
 	return false;
+    
+    fd_set set;
+    FD_ZERO (&set);
+    FD_SET (dc1394_capture_get_fileno(dc_camera), &set);
 
-  dc1394_capture_get_fileno(dc_camera);
-  return false;
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
+    
+    int i = select(FD_SETSIZE, &set, NULL, NULL, &timeout);
+    
+    if (i > 0) return true;
+    return false;
 }
 
 bool CamFireWire::clearBuffer()
