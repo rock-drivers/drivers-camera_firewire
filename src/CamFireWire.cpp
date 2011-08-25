@@ -104,7 +104,7 @@ int CamFireWire::listCameras(std::vector<CamInfo>&cam_infos)const
 // open the camera specified by the CamInfo cam
 bool CamFireWire::open(const CamInfo &cam,const AccessMode mode)
 {
-    dc1394camera_list_t *list;
+    dc1394camera_list_t *list = 0;
 
     if (!dc_device)
 	return false;
@@ -174,25 +174,27 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
         if (!dc_camera->one_shot_capable)
             throw std::runtime_error("Camera is not one-shot capable!");
 
-	err = dc1394_capture_setup(dc_camera,8, DC1394_CAPTURE_FLAGS_DEFAULT);
-	dc1394_video_set_transmission(dc_camera, DC1394_ON);
-
-	dc1394_feature_set_power(dc_camera, DC1394_FEATURE_TRIGGER, DC1394_ON);
+        err = dc1394_capture_setup(dc_camera,8, DC1394_CAPTURE_FLAGS_DEFAULT);
+        dc1394_video_set_transmission(dc_camera, DC1394_ON);
+	
+        dc1394_feature_set_power(dc_camera, DC1394_FEATURE_TRIGGER, DC1394_ON);
         break;
 
     // grab N frames (N previously defined by setting AcquisitionFrameCount
     case MultiFrame:
         err = dc1394_capture_setup(dc_camera,buffer_len,DC1394_CAPTURE_FLAGS_DEFAULT);
-	if(multi_shot_count == 0)
-	  throw std::runtime_error("Set AcquisitionFrameCount (multi-shot) to a positive number before calling grab()!");
-	dc1394_set_control_register(dc_camera,0x614, 0);
-	dc1394_set_control_register(dc_camera,0x61c, 0x40000000 + multi_shot_count);
+        if(multi_shot_count == 0)
+          throw std::runtime_error("Set AcquisitionFrameCount (multi-shot) to a positive number before calling grab()!");
+        dc1394_set_control_register(dc_camera,0x614, 0);
+        dc1394_set_control_register(dc_camera,0x61c, 0x40000000 + multi_shot_count);
         break;
 	
     // start grabbing frames continuously (using the framerate set beforehand)
     case Continuously:
         err = dc1394_capture_setup(dc_camera,buffer_len,DC1394_CAPTURE_FLAGS_DEFAULT);
         dc1394_feature_set_power(dc_camera, DC1394_FEATURE_TRIGGER, DC1394_OFF);
+        dc1394_software_trigger_set_power(dc_camera,DC1394_ON);
+	
         dc1394_video_set_transmission(dc_camera,DC1394_ON);
         break;
 
@@ -238,12 +240,12 @@ bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
     if(color)
     {
         // create a new DFKI frame and copy the data from tmp_frame
-        Frame tmp;
-        tmp.init(image_size_.width, image_size_.height, data_depth, MODE_BAYER_RGGB, hdr_enabled);
-        tmp.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
+        unconverted_frame.reset();
+        unconverted_frame.init(image_size_.width, image_size_.height, data_depth, MODE_BAYER_RGGB, hdr_enabled);
+        unconverted_frame.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
       
         // convert the bayer pattern image to RGB
-        filter::Frame2RGGB::process(tmp, frame);
+        filter::Frame2RGGB::process(unconverted_frame, frame);
     }
     else
     {
@@ -253,6 +255,7 @@ bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
 
     // set the frame's timestamps (secs and usecs)
     frame.time = base::Time::fromMicroseconds(tmp_frame->timestamp);
+    frame.setStatus(STATUS_VALID);
 
     // re-queue the frame previously used for dequeueing
     dc1394_capture_enqueue(dc_camera, tmp_frame);
@@ -301,6 +304,88 @@ bool CamFireWire::isReadyForOneShot()
     
     // the first bit is 1 when the cam is not ready and 0 when ready for a one-shot
     return (one_shot & 0x80000000UL) ? false : true;
+}
+
+// check if integer-valued attributes are available
+bool CamFireWire::isAttribAvail(const int_attrib::CamAttrib attrib)
+{
+    if (!dc_camera)
+	return false;
+
+    switch (attrib)
+    {
+    case int_attrib::ExposureValue:
+        return true;
+    case int_attrib::GainValue:
+        return true;
+    case int_attrib::WhitebalValueRed:
+        return true;
+    case int_attrib::WhitebalValueBlue:
+        return true;
+    case int_attrib::IsoSpeed:
+        return true;
+    case int_attrib::AcquisitionFrameCount:
+        return true;
+    default:
+        return false;
+    };
+    return false;
+}
+
+// check if double-valued attributes are available
+bool CamFireWire::isAttribAvail(const double_attrib::CamAttrib attrib)
+{
+    if (!dc_camera)
+	return false;
+
+    switch (attrib)
+    {
+    case double_attrib::FrameRate:
+        return true;
+    default:
+        return false;
+    };
+    return false;
+}
+
+// check if string attributes are available
+bool CamFireWire::isAttribAvail(const str_attrib::CamAttrib attrib)
+{
+    return false;
+}
+
+// check if enum attributes are available
+bool CamFireWire::isAttribAvail(const enum_attrib::CamAttrib attrib)
+{
+    if (!dc_camera)
+	return false;
+
+    switch (attrib)
+    {
+    case enum_attrib::GammaToOn:
+        return true;
+    case enum_attrib::GammaToOff:
+        return true;
+    case enum_attrib::ExposureModeToAuto:
+        return true;
+    case enum_attrib::ExposureModeToManual:
+        return true;
+    case enum_attrib::ExposureModeToAutoOnce:
+        return true;
+    case enum_attrib::GainModeToAuto:
+        return true;
+    case enum_attrib::GainModeToManual:
+        return true;
+    case enum_attrib::WhitebalModeToAuto:
+        return true;
+    case enum_attrib::WhitebalModeToAutoOnce:
+        return true;
+    case enum_attrib::WhitebalModeToManual:
+        return true;
+    default:
+        return false;
+    };
+    return false;
 }
 
 // set integer-valued attributes

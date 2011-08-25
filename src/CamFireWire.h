@@ -9,6 +9,7 @@
 #define	_CAMFIREWIRE_H
 
 #include "camera_interface/CamInterface.h"
+#include "base/samples/frame.h"
 #include "./filter/frame2rggb.h"
 #include "./cam_fw_types.h"
 
@@ -38,6 +39,10 @@ public:
                           const  uint8_t color_depth,
                           const bool resize_frames);
     bool isFrameAvailable();
+    bool isAttribAvail(const int_attrib::CamAttrib attrib);
+    bool isAttribAvail(const double_attrib::CamAttrib attrib);
+    bool isAttribAvail(const str_attrib::CamAttrib attrib);
+    bool isAttribAvail(const enum_attrib::CamAttrib attrib);
     int getAttrib(const int_attrib::CamAttrib attrib);
     bool setAttrib(const int_attrib::CamAttrib attrib,const int value);
     bool setAttrib(const enum_attrib::CamAttrib attrib);
@@ -60,6 +65,7 @@ public:
 
 private:
     dc1394_t *dc_device;
+    base::samples::frame::Frame unconverted_frame;
     bool hdr_enabled;
     int data_depth;
     int frame_size_in_byte_;
