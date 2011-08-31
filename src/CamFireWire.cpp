@@ -22,6 +22,8 @@ CamFireWire::CamFireWire()
     dc_camera = NULL;
     hdr_enabled = false;
     multi_shot_count = 0;
+    data_depth = 0;
+    frame_mode = MODE_UNDEFINED;
 }
 
 bool CamFireWire::cleanup()
@@ -271,19 +273,154 @@ bool CamFireWire::setFrameSettings(const frame_size_t size,
 {
     if (!dc_camera)
 	return false;
-
-    dc1394video_modes_t vmst;
-    dc1394_video_get_supported_modes(dc_camera,&vmst);
+    
+    if (color_depth != 1 && color_depth != 2)
+        throw std::runtime_error("Unsupported color depth or mode!");
+    
+    if (mode == MODE_BAYER)
+        frame_mode = MODE_BAYER_BGGR;
+    else
+        frame_mode = mode;
+    
+    data_depth = color_depth * 8;
+    dc1394video_mode_t selected_mode = DC1394_VIDEO_MODE_640x480_MONO8;
 
     switch (mode)
     {
+    case MODE_BAYER:
+    case MODE_BAYER_BGGR:
     case MODE_BAYER_RGGB:
-        dc1394_video_set_mode(dc_camera, DC1394_VIDEO_MODE_640x480_MONO8);
-	data_depth = 8;
+    case MODE_BAYER_GRBG:
+    case MODE_BAYER_GBRG:
+        if (isVideoModeSupported(DC1394_VIDEO_MODE_FORMAT7_0) && isVideo7RAWModeSupported(data_depth))
+        {
+            selected_mode = DC1394_VIDEO_MODE_FORMAT7_0;
+            uint32_t max_height = 0;
+            uint32_t max_width = 0;
+            dc1394_format7_get_max_image_size(dc_camera, selected_mode, &max_width, &max_height);
+            if (size.height <= max_height && size.width <= max_width)
+            {
+                dc1394_format7_set_image_size(dc_camera, selected_mode, size.width, size.height);
+                dc1394_format7_set_image_position(dc_camera, selected_mode, 
+                                            (max_width - (uint32_t)size.width) * 0.5, 
+                                            (max_height - (uint32_t)size.height) * 0.5);
+                dc1394_format7_set_color_coding(dc_camera, selected_mode, 
+                                             data_depth == 16 ? DC1394_COLOR_CODING_RAW16 : DC1394_COLOR_CODING_RAW8);
+            }
+            else
+            {
+                throw std::runtime_error("Resolution is not supported!");
+            }
+            break;
+        }
+        //if format 7 is not supported use MONO as RAW mode instead
+    case MODE_GRAYSCALE:
+        if(size.height <= 480) 
+        {
+            if (data_depth == 8)
+                selected_mode = DC1394_VIDEO_MODE_640x480_MONO8;
+            else if (data_depth == 16)
+                selected_mode = DC1394_VIDEO_MODE_640x480_MONO16;
+        }
+        else if(size.height <= 600)
+        {
+            if (data_depth == 8)
+                selected_mode = DC1394_VIDEO_MODE_800x600_MONO8;
+            else if (data_depth == 16)
+                selected_mode = DC1394_VIDEO_MODE_800x600_MONO16;
+        }
+        else if(size.height <= 768)
+        {
+            if (data_depth == 8)
+                selected_mode = DC1394_VIDEO_MODE_1024x768_MONO8;
+            else if (data_depth == 16)
+                selected_mode = DC1394_VIDEO_MODE_1024x768_MONO16;
+        }
+         else if(size.height <= 960)
+        {
+            if (data_depth == 8)
+                selected_mode = DC1394_VIDEO_MODE_1280x960_MONO8;
+            else if (data_depth == 16)
+                selected_mode = DC1394_VIDEO_MODE_1280x960_MONO16;
+        }
+        else
+        {
+            if (data_depth == 8)
+                selected_mode = DC1394_VIDEO_MODE_1600x1200_MONO8;
+            else if (data_depth == 16)
+                selected_mode = DC1394_VIDEO_MODE_1600x1200_MONO16;
+        }
+        break;
+    case MODE_RGB:
+        if(data_depth == 8)
+        {
+            if(size.height <= 480) 
+            {
+                selected_mode = DC1394_VIDEO_MODE_640x480_RGB8;
+            }
+            else if(size.height <= 600)
+            {
+                selected_mode = DC1394_VIDEO_MODE_800x600_RGB8;
+            }
+            else if(size.height <= 768)
+            {
+                selected_mode = DC1394_VIDEO_MODE_1024x768_RGB8;
+            }
+            else if(size.height <= 960)
+            {
+                selected_mode = DC1394_VIDEO_MODE_1280x960_RGB8;
+            }
+            else
+            {
+                selected_mode = DC1394_VIDEO_MODE_1600x1200_RGB8;
+            }
+        }
+        else
+        {
+            throw std::runtime_error("Only 8 bit color depth is supported for mod RGB!");
+        }
+        break;
+    case MODE_UYVY:
+        if(size.height <= 120) 
+        {
+            selected_mode = DC1394_VIDEO_MODE_160x120_YUV444;
+        }
+        else if(size.height <= 240) 
+        {
+            selected_mode = DC1394_VIDEO_MODE_320x240_YUV422;
+        }
+        else if(size.height <= 480) 
+        {
+            selected_mode = DC1394_VIDEO_MODE_640x480_YUV422;
+        }
+        else if(size.height <= 600) 
+        {
+            selected_mode = DC1394_VIDEO_MODE_800x600_YUV422;
+        }
+        else if(size.height <= 768) 
+        {
+            selected_mode = DC1394_VIDEO_MODE_1024x768_YUV422;
+        }
+        else if(size.height <= 960) 
+        {
+            selected_mode = DC1394_VIDEO_MODE_1280x960_YUV422;
+        }
+        else
+        {
+            selected_mode = DC1394_VIDEO_MODE_1600x1200_YUV422;
+        }
         break;
     default:
         throw std::runtime_error("Unknown frame mode!");
     }
+    
+    
+    // check if video mode is supported
+    if(isVideoModeSupported(selected_mode))
+        dc1394_video_set_mode(dc_camera, selected_mode);
+    else
+        throw std::runtime_error("Video mode is not supported!");
+    
     image_size_ = size;
     image_mode_ = mode;
     image_color_depth_ = color_depth;
@@ -304,6 +441,51 @@ bool CamFireWire::isReadyForOneShot()
     
     // the first bit is 1 when the cam is not ready and 0 when ready for a one-shot
     return (one_shot & 0x80000000UL) ? false : true;
+}
+
+// check if video mode is supported
+bool CamFireWire::isVideoModeSupported(const dc1394video_mode_t mode)
+{
+    if (!dc_camera)
+    return false;
+    
+    dc1394video_modes_t vmst;
+    dc1394_video_get_supported_modes(dc_camera,&vmst);
+    
+       
+    bool mode_supported = false;
+    for(int i = 0; i < vmst.num; i++)
+    {
+        if (vmst.modes[i] == mode)
+        {
+            mode_supported = true;
+            break;
+        }
+    }
+    
+    return mode_supported;
+}
+
+bool CamFireWire::isVideo7RAWModeSupported(int depth)
+{
+    dc1394color_codings_t codings;
+    dc1394_format7_get_color_codings(dc_camera, DC1394_VIDEO_MODE_FORMAT7_0, &codings);
+    
+    dc1394color_coding_t coding = DC1394_COLOR_CODING_RAW8;
+    if (depth == 16)
+        coding = DC1394_COLOR_CODING_RAW16;
+    
+    bool mode_supported = false;
+    for(int i = 0; i < codings.num; i++)
+    {
+        if(codings.codings[i] == coding)
+        {
+            mode_supported = true;
+            break;
+        }
+    }
+    
+    return mode_supported;
 }
 
 // check if integer-valued attributes are available

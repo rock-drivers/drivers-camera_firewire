@@ -12,6 +12,7 @@
 #include "base/samples/frame.h"
 #include "./filter/frame2rggb.h"
 #include "./cam_fw_types.h"
+#include <dc1394/types.h>
 
 struct __dc1394_camera;
 typedef __dc1394_camera dc1394camera_t;
@@ -64,10 +65,14 @@ public:
     dc1394camera_t *dc_camera;
 
 private:
+    bool isVideoModeSupported(const dc1394video_mode_t mode);
+    bool isVideo7RAWModeSupported(int depth);
+    
     dc1394_t *dc_device;
     base::samples::frame::Frame unconverted_frame;
-    bool hdr_enabled;
+    base::samples::frame::frame_mode_t frame_mode;
     int data_depth;
+    bool hdr_enabled;
     int frame_size_in_byte_;
     int multi_shot_count;
 
