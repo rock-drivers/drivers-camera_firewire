@@ -220,8 +220,6 @@ bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
 {
     if (!dc_camera)
 	return false;
-
-    bool color = true;
   
     // dequeue a frame using the dc1394-frame tmp_frame
     dc1394video_frame_t *tmp_frame=NULL;
@@ -239,21 +237,8 @@ bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
         usleep(1000);
     }
     
-    if(color)
-    {
-        // create a new DFKI frame and copy the data from tmp_frame
-        unconverted_frame.reset();
-        unconverted_frame.init(image_size_.width, image_size_.height, data_depth, MODE_BAYER_RGGB, hdr_enabled);
-        unconverted_frame.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
-      
-        // convert the bayer pattern image to RGB
-        filter::Frame2RGGB::process(unconverted_frame, frame);
-    }
-    else
-    {
-        frame.init(image_size_.width, image_size_.height, data_depth, MODE_BAYER_RGGB, hdr_enabled);
-        frame.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
-    }
+    frame.init(image_size_.width, image_size_.height, data_depth, frame_mode, hdr_enabled);
+    frame.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
 
     // set the frame's timestamps (secs and usecs)
     frame.time = base::Time::fromMicroseconds(tmp_frame->timestamp);
