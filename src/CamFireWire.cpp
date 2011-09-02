@@ -224,25 +224,33 @@ bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
     // dequeue a frame using the dc1394-frame tmp_frame
     dc1394video_frame_t *tmp_frame=NULL;
 
-    int cycle = 0;
-    while(true)
-    {
-        int ret = dc1394_capture_dequeue(dc_camera, DC1394_CAPTURE_POLICY_WAIT, &tmp_frame);
-        if ((ret == DC1394_SUCCESS) && tmp_frame)
-            break;
-        if ((ret == DC1394_SUCCESS) && !tmp_frame)
-            std::cerr << "ret is SUCCESS but tmp_frame is NULL" << std::endl;
-        if (++cycle > timeout)
-            return false;
-        usleep(1000);
-    }
+    int ret = dc1394_capture_dequeue(dc_camera, DC1394_CAPTURE_POLICY_POLL, &tmp_frame);
     
     frame.init(image_size_.width, image_size_.height, data_depth, frame_mode, hdr_enabled);
-    frame.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
 
-    // set the frame's timestamps (secs and usecs)
-    frame.time = base::Time::fromMicroseconds(tmp_frame->timestamp);
-    frame.setStatus(STATUS_VALID);
+    if(ret == DC1394_SUCCESS)
+    {
+        if(tmp_frame == NULL)
+        {
+            throw std::runtime_error("Recieved frame is empty.");
+        }
+        else
+        {
+            frame.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
+            // set the frame's timestamps (secs and usecs)
+            frame.time = base::Time::fromMicroseconds(tmp_frame->timestamp);
+            frame.setStatus(STATUS_VALID);
+        }
+    }
+    else
+    {
+        frame.setStatus(STATUS_INVALID);
+        
+        // re-queue the frame previously used for dequeueing
+        dc1394_capture_enqueue(dc_camera, tmp_frame);
+
+        return false;
+    }
 
     // re-queue the frame previously used for dequeueing
     dc1394_capture_enqueue(dc_camera, tmp_frame);
