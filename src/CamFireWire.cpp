@@ -9,6 +9,7 @@
 #include "camera_interface/CamInfoUtils.h"
 #include "CamFireWire.h"
 #include <dc1394/dc1394.h>
+#include <dc1394/vendor/avt.h>
 
 
 using namespace base::samples::frame;
@@ -502,6 +503,13 @@ bool CamFireWire::isAttribAvail(const int_attrib::CamAttrib attrib)
         return true;
     case int_attrib::AcquisitionFrameCount:
         return true;
+    case int_attrib::HDRValue:
+        dc1394_avt_adv_feature_info_t avt_info;
+        dc1394_avt_get_advanced_feature_inquiry(dc_camera, &avt_info);
+        if(avt_info.HDR_Mode == DC1394_TRUE)
+            return true;
+        else
+            return false;
     default:
         return false;
     };
@@ -625,7 +633,57 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
     case int_attrib::AcquisitionFrameCount:
         multi_shot_count = value;
         break;
-	
+        
+    case int_attrib::HDRValue:
+    {
+        uint32_t hdr_value = (uint32_t)value;
+        
+        // unpack voltage values
+        uint32_t kneepoint1_voltage1 = hdr_value & 0xFFUL;
+        uint32_t kneepoint1_voltage2 = (hdr_value >> 8) & 0xFFUL;
+        uint32_t kneepoint2_voltage1 = (hdr_value >> 16) & 0xFFUL;
+        uint32_t kneepoint2_voltage2 = (hdr_value >> 24) & 0xFFUL;
+        
+        // get actual settings
+        uint32_t points_nb, kneepoint1, kneepoint2, kneepoint3;
+        dc1394bool_t hdr;
+        dc1394_avt_get_multiple_slope(dc_camera, &hdr, &points_nb, &kneepoint1, &kneepoint2, &kneepoint3);
+        
+        if(kneepoint1_voltage1 > 0 || kneepoint1_voltage2 > 0)
+        {
+            // activate hdr
+            uint32_t kneepoint1_time = 1;
+            kneepoint1 = (kneepoint1 & 0x00FFFFFFUL) | ((kneepoint1_voltage1 & 0xFFUL) << 24);
+            kneepoint1 = (kneepoint1 & 0xFF00FFFFUL) | ((kneepoint1_voltage2 & 0xFFUL) << 16);
+            kneepoint1 = (kneepoint1 & 0xFFFF0000UL) | (kneepoint1_time & 0xFFFFUL);
+            
+            if(kneepoint2_voltage1 > 0 || kneepoint2_voltage2 > 0)
+            {
+                // use two kneepoints
+                points_nb = 2;
+                uint32_t kneepoint2_time = 1;
+                kneepoint2 = (kneepoint2 & 0x00FFFFFFUL) | ((kneepoint2_voltage1 & 0xFFUL) << 24);
+                kneepoint2 = (kneepoint2 & 0xFF00FFFFUL) | ((kneepoint2_voltage2 & 0xFFUL) << 16);
+                kneepoint2 = (kneepoint2 & 0xFFFF0000UL) | (kneepoint2_time & 0xFFFFUL);
+            }
+            else 
+            {
+                // use one kneepoint
+                points_nb = 1;
+                kneepoint2 = 0;
+            }
+            kneepoint3 = 0;
+            dc1394_avt_set_multiple_slope(dc_camera, DC1394_TRUE, points_nb, kneepoint1, kneepoint2, kneepoint3);
+            hdr_enabled = true;
+        }
+        else
+        {
+            // deactivate hdr
+            dc1394_avt_set_multiple_slope(dc_camera, DC1394_FALSE, points_nb, kneepoint1, kneepoint2, kneepoint3); 
+            hdr_enabled = false;
+        }
+        break;
+    }
     // the attribute given is not supported (yet)
     default:
         throw std::runtime_error("Unknown attribute!");
