@@ -267,17 +267,18 @@ bool CamFireWire::setFrameSettings(const frame_size_t size,
     if (!dc_camera)
 	return false;
     
-    if (color_depth != 1 && color_depth != 2)
-        throw std::runtime_error("Unsupported color depth or mode!");
-    
     if (mode == MODE_BAYER)
         frame_mode = MODE_BAYER_BGGR;
     else
         frame_mode = mode;
-    
-    data_depth = color_depth * 8;
-    dc1394video_mode_t selected_mode = DC1394_VIDEO_MODE_640x480_MONO8;
 
+    int channel_count = Frame::getChannelCount(mode);
+    if (channel_count <= 0)
+        throw std::runtime_error("Unknown frame mode!");
+    data_depth = (color_depth * 8) / channel_count;
+    
+    dc1394video_mode_t selected_mode = DC1394_VIDEO_MODE_640x480_MONO8;
+    
     switch (mode)
     {
     case MODE_BAYER:
