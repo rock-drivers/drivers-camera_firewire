@@ -650,6 +650,56 @@ int CamFireWire::getAttrib(const int_attrib::CamAttrib attrib)
     }
 }
 
+// get double attributes
+double CamFireWire::getAttrib(const double_attrib::CamAttrib attrib)
+{
+    if (!dc_camera)
+    return false;
+    
+    dc1394framerate_t dc_framerate;
+    double framerate = 0;
+    
+    switch(attrib)
+    {
+        // get current frame rate
+        case double_attrib::FrameRate:
+            dc1394_video_get_framerate(dc_camera, &dc_framerate);
+            switch(dc_framerate)
+            {
+                case DC1394_FRAMERATE_1_875:
+                    framerate = 1.875;
+                    break;
+                case DC1394_FRAMERATE_3_75:
+                    framerate = 3.75;
+                    break;
+                case DC1394_FRAMERATE_7_5:
+                    framerate = 7.5;
+                    break;
+                case DC1394_FRAMERATE_15:
+                    framerate = 15;
+                    break;
+                case DC1394_FRAMERATE_30:
+                    framerate = 30;
+                    break;
+                case DC1394_FRAMERATE_60:
+                    framerate = 60;
+                    break;
+                case DC1394_FRAMERATE_120:
+                    framerate = 120;
+                    break;
+                case DC1394_FRAMERATE_240:
+                    framerate = 240;
+                    break;
+            }
+            return framerate;
+            break;
+            
+        // attribute unknown or not supported (yet)
+        default:
+            throw std::runtime_error("Unknown attribute!");
+    }
+}
+
 // set enum attributes
 bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
 {
