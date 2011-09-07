@@ -46,6 +46,7 @@ bool CamFireWire::cleanup()
         dc1394_video_get_iso_channel(tmp_camera, &val);
         dc1394_iso_release_channel(tmp_camera, val);
     }
+    return true;
 }
 
 CamFireWire::~CamFireWire()
@@ -62,6 +63,7 @@ CamFireWire::~CamFireWire()
 bool CamFireWire::setDevice(dc1394_t *dev)
 {
     dc_device = dev;
+    return true;
 }
 
 // list all cameras on the firewire bus
@@ -145,6 +147,7 @@ bool CamFireWire::close()
         dc1394_camera_free(dc_camera);
         dc_camera = NULL;
     }
+    return true;
 }
 
 // start grabbing using the given GrabMode mode and write frame into a buffer of lenght buffer_len
@@ -214,6 +217,8 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
     act_grab_mode_ = mode;
     if (act_grab_mode_ == SingleFrame)
       act_grab_mode_ = Stop;
+    
+    return true;
 }
 
 // retrieve a frame from the camera
@@ -419,6 +424,7 @@ bool CamFireWire::setFrameSettings(const frame_size_t size,
     image_size_ = size;
     image_mode_ = mode;
     image_color_depth_ = color_depth;
+    return true;
 }
 
 // (should) return true if the camera is ready for the next one-shot capture
@@ -488,17 +494,23 @@ bool CamFireWire::isAttribAvail(const int_attrib::CamAttrib attrib)
 {
     if (!dc_camera)
 	return false;
+    
+    dc1394bool_t isPresent = DC1394_FALSE;
 
     switch (attrib)
     {
     case int_attrib::ExposureValue:
-        return true;
+        dc1394_feature_is_present(dc_camera, DC1394_FEATURE_SHUTTER, &isPresent);
+        return (bool)isPresent;
     case int_attrib::GainValue:
-        return true;
+        dc1394_feature_is_present(dc_camera, DC1394_FEATURE_GAIN, &isPresent);
+        return (bool)isPresent;
     case int_attrib::WhitebalValueRed:
-        return true;
+        dc1394_feature_is_present(dc_camera, DC1394_FEATURE_WHITE_BALANCE, &isPresent);
+        return (bool)isPresent;
     case int_attrib::WhitebalValueBlue:
-        return true;
+        dc1394_feature_is_present(dc_camera, DC1394_FEATURE_WHITE_BALANCE, &isPresent);
+        return (bool)isPresent;
     case int_attrib::IsoSpeed:
         return true;
     case int_attrib::AcquisitionFrameCount:
@@ -543,33 +555,51 @@ bool CamFireWire::isAttribAvail(const enum_attrib::CamAttrib attrib)
 {
     if (!dc_camera)
 	return false;
+    
+    dc1394feature_t feature;
 
     switch (attrib)
     {
     case enum_attrib::GammaToOn:
-        return true;
+        feature = DC1394_FEATURE_GAMMA;
+        break;
     case enum_attrib::GammaToOff:
-        return true;
+        feature = DC1394_FEATURE_GAMMA;
+        break;
     case enum_attrib::ExposureModeToAuto:
-        return true;
+        feature = DC1394_FEATURE_SHUTTER;
+        break;
     case enum_attrib::ExposureModeToManual:
-        return true;
+        feature = DC1394_FEATURE_SHUTTER;
+        break;
     case enum_attrib::ExposureModeToAutoOnce:
-        return true;
+        feature = DC1394_FEATURE_SHUTTER;
+        break;
     case enum_attrib::GainModeToAuto:
-        return true;
+        feature = DC1394_FEATURE_GAIN;
+        break;
     case enum_attrib::GainModeToManual:
-        return true;
+        feature = DC1394_FEATURE_GAIN;
+        break;
     case enum_attrib::WhitebalModeToAuto:
-        return true;
+        feature = DC1394_FEATURE_WHITE_BALANCE;
+        break;
     case enum_attrib::WhitebalModeToAutoOnce:
-        return true;
+        feature = DC1394_FEATURE_WHITE_BALANCE;
+        break;
     case enum_attrib::WhitebalModeToManual:
-        return true;
+        feature = DC1394_FEATURE_WHITE_BALANCE;
+        break;
     default:
         return false;
     };
-    return false;
+    
+    dc1394bool_t isPresent = DC1394_FALSE;
+    dc1394_feature_is_present(dc_camera, feature, &isPresent);
+    if (isPresent == DC1394_TRUE)
+        return true;
+    else
+        return false;
 }
 
 // set integer-valued attributes
@@ -688,7 +718,7 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
     default:
         throw std::runtime_error("Unknown attribute!");
     };
-    return false;
+    return true;
 };
 
 int CamFireWire::getAttrib(const int_attrib::CamAttrib attrib)
@@ -870,7 +900,7 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
         throw std::runtime_error("Unknown attribute!");
     };
 
-    return false;
+    return true;
 };
 
 // set double-valued attributes
@@ -895,10 +925,10 @@ bool CamFireWire::setAttrib(const double_attrib::CamAttrib attrib, const double 
             framerate = DC1394_FRAMERATE_60;
         else if (value==15)
             framerate = DC1394_FRAMERATE_15;
-	else if (value==8)
-	    framerate = DC1394_FRAMERATE_7_5;
+        else if (value==8)
+            framerate = DC1394_FRAMERATE_7_5;
         else if (value==4)
-	    framerate = DC1394_FRAMERATE_3_75;
+            framerate = DC1394_FRAMERATE_3_75;
         else
             throw std::runtime_error("Framerate not supported! Use 15, 30 or 60 fps.");
 
@@ -911,7 +941,7 @@ bool CamFireWire::setAttrib(const double_attrib::CamAttrib attrib, const double 
         throw std::runtime_error("Unknown attribute!");
     };
     
-    return false;
+    return true;
 };
 
 // returns true whenever a frame is available
