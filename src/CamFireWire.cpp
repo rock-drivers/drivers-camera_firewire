@@ -957,12 +957,6 @@ bool CamFireWire::clearBuffer()
     }
 } // end clearBuffer
 
-bool undistortFrame(base::samples::frame::Frame &in, base::samples::frame::Frame &out, CalibrationData calib)
-{
-    // use opencv to undistort the frame using the given calibration data set
-    return false;
-}
-
 int CamFireWire::getFileDescriptor() const
 {
     if (!dc_camera)
