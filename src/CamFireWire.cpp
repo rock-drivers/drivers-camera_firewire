@@ -202,21 +202,21 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
         dc1394_software_trigger_set_power(dc_camera,DC1394_ON);
 	
         dc1394_video_set_transmission(dc_camera,DC1394_ON);
-        
-        // check if whitebalance is in one push auto mode
-        dc1394feature_mode_t feature_mode;
-        dc1394_feature_get_mode(dc_camera, DC1394_FEATURE_WHITE_BALANCE, &feature_mode);
-        if(feature_mode == DC1394_FEATURE_MODE_ONE_PUSH_AUTO)
-        {
-            // wait for two seconds and turn transmission on again
-            sleep(2);
-            dc1394_video_set_transmission(dc_camera,DC1394_ON);
-        }
         break;
     default:
         throw std::runtime_error("Unknown grab mode!");
     }
-
+    
+    // check if whitebalance is in one push auto mode
+    dc1394feature_mode_t feature_mode;
+    dc1394_feature_get_mode(dc_camera, DC1394_FEATURE_WHITE_BALANCE, &feature_mode);
+    if((mode == SingleFrame || mode == Continuously) && feature_mode == DC1394_FEATURE_MODE_ONE_PUSH_AUTO)
+    {
+        // wait for two seconds and turn transmission on again
+        sleep(2);
+        dc1394_video_set_transmission(dc_camera,DC1394_ON);
+    }
+    
     if(0 != err)
     {
         std::cerr << "prepare for grab failed, libdc1394 error: " <<
