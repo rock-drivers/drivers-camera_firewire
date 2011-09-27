@@ -5,7 +5,6 @@
   <license></license>
   <url>http://</url>
   <logo>http://</logo>
-  <rosdep name="opencv">
   <rosdep name="dc1394" />
   <depend package="base/types" />
   <depend package="drivers/camera_interface" />
