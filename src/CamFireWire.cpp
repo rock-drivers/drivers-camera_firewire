@@ -10,6 +10,8 @@
 #include "CamFireWire.h"
 #include <dc1394/dc1394.h>
 #include <dc1394/vendor/avt.h>
+#include <base/logging.h>
+#include <dc1394/control.h>
 
 
 using namespace base::samples::frame;
@@ -559,6 +561,17 @@ bool CamFireWire::isAttribAvail(const str_attrib::CamAttrib attrib)
     return false;
 }
 
+bool CamFireWire::checkHandleError(dc1394error_t error) const
+{
+    if(error != DC1394_SUCCESS)
+    {
+	const char *errorString = dc1394_error_get_string(error);
+	LOG_ERROR_S << errorString << std::endl;
+	return true;
+    }
+    return false;
+}
+
 // check if enum attributes are available
 bool CamFireWire::isAttribAvail(const enum_attrib::CamAttrib attrib)
 {
@@ -567,6 +580,7 @@ bool CamFireWire::isAttribAvail(const enum_attrib::CamAttrib attrib)
     
     dc1394feature_t feature;
 
+    dc1394error_t ret;
     switch (attrib)
     {
     case enum_attrib::GammaToOn:
@@ -604,7 +618,10 @@ bool CamFireWire::isAttribAvail(const enum_attrib::CamAttrib attrib)
     };
     
     dc1394bool_t isPresent = DC1394_FALSE;
-    dc1394_feature_is_present(dc_camera, feature, &isPresent);
+    ret = dc1394_feature_is_present(dc_camera, feature, &isPresent);
+    if(checkHandleError(ret))
+	return false;
+    
     if (isPresent == DC1394_TRUE)
         return true;
     else
@@ -619,33 +636,39 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
 
     // the feature (attribute) we want to set
     dc1394feature_t feature;
+   
+    dc1394error_t ret;
     
     switch (attrib)
     {
     // set the shutter time
     case int_attrib::ExposureValue:
         feature = DC1394_FEATURE_SHUTTER;
-        dc1394_feature_set_value(dc_camera, feature , value);
+        ret = dc1394_feature_set_value(dc_camera, feature , value);
         break;
 	
     // set the gain
     case int_attrib::GainValue:
         feature = DC1394_FEATURE_GAIN;
-        dc1394_feature_set_value(dc_camera, feature , value);
+        ret = dc1394_feature_set_value(dc_camera, feature , value);
         break;
 	
     // set the red white-balance value
     case int_attrib::WhitebalValueRed:
         uint32_t ub;
         uint32_t vr;
-        dc1394_feature_whitebalance_get_value(dc_camera, &ub, &vr);
-        dc1394_feature_whitebalance_set_value(dc_camera,ub,value);
+        ret = dc1394_feature_whitebalance_get_value(dc_camera, &ub, &vr);
+	if(checkHandleError(ret))
+	    return false;
+        ret = dc1394_feature_whitebalance_set_value(dc_camera,ub,value);
         break;
 	
     // set the blue white-balance value
     case int_attrib::WhitebalValueBlue:
-        dc1394_feature_whitebalance_get_value(dc_camera, &ub, &vr);
-        dc1394_feature_whitebalance_set_value(dc_camera,value,vr);
+        ret = dc1394_feature_whitebalance_get_value(dc_camera, &ub, &vr);
+        if(checkHandleError(ret))
+	    return false;
+        ret = dc1394_feature_whitebalance_set_value(dc_camera,value,vr);
         break;
 	
     // set the camera's isochronous transfer speed on the bus in Mbps
@@ -665,7 +688,7 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
         default:
             throw std::runtime_error("Unsupported Iso Speed!");
         };
-        dc1394_video_set_iso_speed(dc_camera, speed);
+        ret = dc1394_video_set_iso_speed(dc_camera, speed);
         break;
 	
     // set the number of frames to capture in multi-shot mode
@@ -686,7 +709,9 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
         // get actual settings
         uint32_t points_nb, kneepoint1, kneepoint2, kneepoint3;
         dc1394bool_t hdr;
-        dc1394_avt_get_multiple_slope(dc_camera, &hdr, &points_nb, &kneepoint1, &kneepoint2, &kneepoint3);
+        ret = dc1394_avt_get_multiple_slope(dc_camera, &hdr, &points_nb, &kneepoint1, &kneepoint2, &kneepoint3);
+        if(checkHandleError(ret))
+	    return false;
         
         if(kneepoint1_voltage1 > 0 || kneepoint1_voltage2 > 0)
         {
@@ -712,14 +737,18 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
                 kneepoint2 = 0;
             }
             kneepoint3 = 0;
-            dc1394_avt_set_multiple_slope(dc_camera, DC1394_TRUE, points_nb, kneepoint1, kneepoint2, kneepoint3);
-            hdr_enabled = true;
+            ret = dc1394_avt_set_multiple_slope(dc_camera, DC1394_TRUE, points_nb, kneepoint1, kneepoint2, kneepoint3);
+            if(checkHandleError(ret))
+		return false;
+	    hdr_enabled = true;
         }
         else
         {
             // deactivate hdr
-            dc1394_avt_set_multiple_slope(dc_camera, DC1394_FALSE, points_nb, kneepoint1, kneepoint2, kneepoint3); 
-            hdr_enabled = false;
+            ret = dc1394_avt_set_multiple_slope(dc_camera, DC1394_FALSE, points_nb, kneepoint1, kneepoint2, kneepoint3); 
+            if(checkHandleError(ret))
+		return false;
+	    hdr_enabled = false;
         }
         break;
     }
@@ -727,6 +756,10 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
     default:
         throw std::runtime_error("Unknown attribute!");
     };
+    
+    if(checkHandleError(ret))
+	return false;
+            
     return true;
 };
 
@@ -821,94 +854,104 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
     // the feature mode (auto/manual) we want to set
     dc1394feature_mode_t mode;
     
+    //result of the set operation
+    dc1394error_t result;
+
     switch (attrib)
     {
-    // turn gamma on
-    case enum_attrib::GammaToOn:
-        feature = DC1394_FEATURE_GAMMA;
-        value = DC1394_ON;
-	// set the desired attribute/feature value
-        dc1394_feature_set_power(dc_camera, feature , value);
-        break;
 	
-    // turn gamma off
-    case enum_attrib::GammaToOff:
-        feature = DC1394_FEATURE_GAMMA;
-        value = DC1394_OFF;
-	// set the desired attribute/feature value
-        dc1394_feature_set_power(dc_camera, feature , value);
-        break;
 	
-    // turn auto exposure on
-    case enum_attrib::ExposureModeToAuto:
-        feature = DC1394_FEATURE_SHUTTER;
-        mode = DC1394_FEATURE_MODE_AUTO;
-        dc1394_feature_set_mode(dc_camera, feature, mode);
-        break;
 
-    // turn auto exposure off
-    case enum_attrib::ExposureModeToManual:
-        feature = DC1394_FEATURE_SHUTTER;
-        mode = DC1394_FEATURE_MODE_MANUAL;
-        dc1394_feature_set_mode(dc_camera, feature, mode);
-        break;
 
-    // tell camera to do a single auto-exposure and then keep the setting fixed
-    case enum_attrib::ExposureModeToAutoOnce:
-        feature = DC1394_FEATURE_SHUTTER;
-        mode = DC1394_FEATURE_MODE_ONE_PUSH_AUTO;
-        dc1394_feature_set_mode(dc_camera, feature, mode);
-        break;
+	// turn gamma on
+	case enum_attrib::GammaToOn:
+	    feature = DC1394_FEATURE_GAMMA;
+	    value = DC1394_ON;
+	    // set the desired attribute/feature value
+	    result = dc1394_feature_set_power(dc_camera, feature , value);
+	    break;
+	    
+	// turn gamma off
+	case enum_attrib::GammaToOff:
+	    feature = DC1394_FEATURE_GAMMA;
+	    value = DC1394_OFF;
+	    // set the desired attribute/feature value
+	    result = dc1394_feature_set_power(dc_camera, feature , value);
+	    break;
+	    
+	// turn auto exposure on
+	case enum_attrib::ExposureModeToAuto:
+	    feature = DC1394_FEATURE_SHUTTER;
+	    mode = DC1394_FEATURE_MODE_AUTO;
+	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
+	    break;
 
-    // turn auto gain on
-    case enum_attrib::GainModeToAuto:
-        feature = DC1394_FEATURE_GAIN;
-        mode = DC1394_FEATURE_MODE_AUTO;
-        dc1394_feature_set_mode(dc_camera, feature, mode);
-        break;
+	// turn auto exposure off
+	case enum_attrib::ExposureModeToManual:
+	    feature = DC1394_FEATURE_SHUTTER;
+	    mode = DC1394_FEATURE_MODE_MANUAL;
+	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
+	    break;
 
-    // turn auto gain off
-    case enum_attrib::GainModeToManual:
-        feature = DC1394_FEATURE_GAIN;
-        mode = DC1394_FEATURE_MODE_MANUAL;
-        dc1394_feature_set_mode(dc_camera, feature, mode);
-        break;
+	// tell camera to do a single auto-exposure and then keep the setting fixed
+	case enum_attrib::ExposureModeToAutoOnce:
+	    feature = DC1394_FEATURE_SHUTTER;
+	    mode = DC1394_FEATURE_MODE_ONE_PUSH_AUTO;
+	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
+	    break;
 
-    // turn auto white balance on
-    case enum_attrib::WhitebalModeToAuto:
-        feature = DC1394_FEATURE_WHITE_BALANCE;
-        mode = DC1394_FEATURE_MODE_AUTO;
-        dc1394_feature_set_mode(dc_camera, feature, mode);
-        
-        //dc1394bool_t result;
-        //uint32_t r;
-        //dc1394_get_register(dc_camera, 0x404, &r);
-        //std::cout << "reg 404 contains " << r << std::endl;
-        //dc1394feature_mode_t m;
-        //dc1394_feature_get_mode(dc_camera, feature, &m);
-        //dc1394_feature_is_present(dc_camera, feature, &result);
-        //dc1394_feature_has_auto_mode(dc_camera, feature, &result);
-        //std::cout << "awb is there? = " << result << " , mode = "<< m << std::endl; 
-        break;
+	// turn auto gain on
+	case enum_attrib::GainModeToAuto:
+	    feature = DC1394_FEATURE_GAIN;
+	    mode = DC1394_FEATURE_MODE_AUTO;
+	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
+	    break;
 
-    // turn one push auto white balance on
-    case enum_attrib::WhitebalModeToAutoOnce:
-        feature = DC1394_FEATURE_WHITE_BALANCE;
-        mode = DC1394_FEATURE_MODE_ONE_PUSH_AUTO;
-        dc1394_feature_set_mode(dc_camera, feature, mode);
-        break;
-        
-    // turn manual white balance on
-    case enum_attrib::WhitebalModeToManual:
-        feature = DC1394_FEATURE_WHITE_BALANCE;
-        mode = DC1394_FEATURE_MODE_MANUAL;
-        dc1394_feature_set_mode(dc_camera, feature, mode);
-        break;
-    // attribute unknown or not supported (yet)
-    default:
-        throw std::runtime_error("Unknown attribute!");
+	// turn auto gain off
+	case enum_attrib::GainModeToManual:
+	    feature = DC1394_FEATURE_GAIN;
+	    mode = DC1394_FEATURE_MODE_MANUAL;
+	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
+	    break;
+
+	// turn auto white balance on
+	case enum_attrib::WhitebalModeToAuto:
+	    feature = DC1394_FEATURE_WHITE_BALANCE;
+	    mode = DC1394_FEATURE_MODE_AUTO;
+	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
+	    
+	    //dc1394bool_t result;
+	    //uint32_t r;
+	    //dc1394_get_register(dc_camera, 0x404, &r);
+	    //std::cout << "reg 404 contains " << r << std::endl;
+	    //dc1394feature_mode_t m;
+	    //dc1394_feature_get_mode(dc_camera, feature, &m);
+	    //dc1394_feature_is_present(dc_camera, feature, &result);
+	    //dc1394_feature_has_auto_mode(dc_camera, feature, &result);
+	    //std::cout << "awb is there? = " << result << " , mode = "<< m << std::endl; 
+	    break;
+
+	// turn one push auto white balance on
+	case enum_attrib::WhitebalModeToAutoOnce:
+	    feature = DC1394_FEATURE_WHITE_BALANCE;
+	    mode = DC1394_FEATURE_MODE_ONE_PUSH_AUTO;
+	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
+	    break;
+	    
+	// turn manual white balance on
+	case enum_attrib::WhitebalModeToManual:
+	    feature = DC1394_FEATURE_WHITE_BALANCE;
+	    mode = DC1394_FEATURE_MODE_MANUAL;
+	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
+	    break;
+	// attribute unknown or not supported (yet)
+	default:
+	    throw std::runtime_error("Unknown attribute!");
     };
 
+    if(checkHandleError(result))
+	return false;
+    
     return true;
 };
 

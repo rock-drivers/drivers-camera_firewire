@@ -13,6 +13,7 @@
 #include "./filter/frame2rggb.h"
 #include "./cam_fw_types.h"
 #include <dc1394/types.h>
+#include <dc1394/log.h>
 
 struct __dc1394_camera;
 typedef __dc1394_camera dc1394camera_t;
@@ -67,6 +68,12 @@ public:
 private:
     bool isVideoModeSupported(const dc1394video_mode_t mode);
     bool isVideo7RAWModeSupported(int depth);
+    /**
+     * Checks if an error was reported and logs it.
+     * @return true if an error was reported
+     * @return false if NO error was reported
+     * */
+    bool checkHandleError(dc1394error_t error) const;
     
     dc1394_t *dc_device;
     base::samples::frame::Frame unconverted_frame;
