@@ -563,7 +563,7 @@ bool CamFireWire::isAttribAvail(const str_attrib::CamAttrib attrib)
 
 bool CamFireWire::checkForTriggerSource(const dc1394trigger_source_t source)
 {
-    dc1394error_t ret;
+    dc1394error_t ret = DC1394_SUCCESS;
     dc1394trigger_sources_t sources;
 
     //get list of supported sources from camera
@@ -602,7 +602,7 @@ bool CamFireWire::isAttribAvail(const enum_attrib::CamAttrib attrib)
     dc1394feature_t feature;
 
     
-    dc1394error_t ret;
+    dc1394error_t ret = DC1394_SUCCESS;
     
     switch (attrib)
     {
@@ -676,7 +676,7 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
     // the feature (attribute) we want to set
     dc1394feature_t feature;
    
-    dc1394error_t ret;
+    dc1394error_t ret = DC1394_SUCCESS;
     
     switch (attrib)
     {
@@ -877,8 +877,6 @@ double CamFireWire::getAttrib(const double_attrib::CamAttrib attrib)
             throw std::runtime_error("Unknown attribute!");
     }
 }
-// FrameStartTriggerModeToSyncIn1 is not supported by the camera
-// FrameStartTriggerEventToEdgeRising is not supported by the camera
 
 dc1394error_t CamFireWire::setTriggerSource(const dc1394trigger_source_t trigger_source)
 {
@@ -922,7 +920,7 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
     dc1394feature_mode_t mode;
     
     //result of the set operation
-    dc1394error_t result;
+    dc1394error_t result = DC1394_SUCCESS;
 
     switch (attrib)
     {
