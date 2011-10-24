@@ -68,6 +68,15 @@ public:
 private:
     bool isVideoModeSupported(const dc1394video_mode_t mode);
     bool isVideo7RAWModeSupported(int depth);
+    dc1394error_t setTriggerSource(const dc1394trigger_source_t trigger_source);
+    
+    /**
+     * Checks weather the camera supports the given trigger source.
+     * @return true if camera supports it.
+     * @return false if camera dosen't support it.
+     * */
+    bool checkForTriggerSource(const dc1394trigger_source_t source);
+
     /**
      * Checks if an error was reported and logs it.
      * @return true if an error was reported

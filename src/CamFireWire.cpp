@@ -561,6 +561,27 @@ bool CamFireWire::isAttribAvail(const str_attrib::CamAttrib attrib)
     return false;
 }
 
+bool CamFireWire::checkForTriggerSource(const dc1394trigger_source_t source)
+{
+    dc1394error_t ret;
+    dc1394trigger_sources_t sources;
+
+    //get list of supported sources from camera
+    ret = dc1394_external_trigger_get_supported_sources(dc_camera, &sources);
+    if(checkHandleError(ret))
+	return false;
+    
+    //check if our source is in the list
+    for(int i = 0; i < sources.num; i++)
+    {
+	if(sources.sources[i] == source)
+	    return true;
+    }
+    
+    //we don't support 'source'
+    return false;
+}
+
 bool CamFireWire::checkHandleError(dc1394error_t error) const
 {
     if(error != DC1394_SUCCESS)
@@ -580,9 +601,27 @@ bool CamFireWire::isAttribAvail(const enum_attrib::CamAttrib attrib)
     
     dc1394feature_t feature;
 
+    
     dc1394error_t ret;
+    
     switch (attrib)
     {
+	case enum_attrib::FrameStartTriggerModeToSyncIn1:
+	    return checkForTriggerSource(DC1394_TRIGGER_SOURCE_0);
+	break;
+	case enum_attrib::FrameStartTriggerModeToSyncIn2:
+	    return checkForTriggerSource(DC1394_TRIGGER_SOURCE_1);
+	break;
+	case enum_attrib::FrameStartTriggerModeToSyncIn3:
+	    return checkForTriggerSource(DC1394_TRIGGER_SOURCE_2);
+	break;
+	case enum_attrib::FrameStartTriggerModeToSyncIn4:
+	    return checkForTriggerSource(DC1394_TRIGGER_SOURCE_3);
+	break;
+	case enum_attrib::FrameStartTriggerModeToSoftware:
+	    return checkForTriggerSource(DC1394_TRIGGER_SOURCE_SOFTWARE);
+	break;
+	
     case enum_attrib::GammaToOn:
         feature = DC1394_FEATURE_GAMMA;
         break;
@@ -838,6 +877,34 @@ double CamFireWire::getAttrib(const double_attrib::CamAttrib attrib)
             throw std::runtime_error("Unknown attribute!");
     }
 }
+// FrameStartTriggerModeToSyncIn1 is not supported by the camera
+// FrameStartTriggerEventToEdgeRising is not supported by the camera
+
+dc1394error_t CamFireWire::setTriggerSource(const dc1394trigger_source_t trigger_source)
+{
+	dc1394error_t result = dc1394_external_trigger_set_source(dc_camera, trigger_source);
+	if(result != DC1394_SUCCESS)
+	    return result;
+	
+	if(trigger_source != DC1394_TRIGGER_SOURCE_SOFTWARE)
+	{
+	    result = dc1394_software_trigger_set_power(dc_camera, DC1394_OFF);
+	    if(result != DC1394_SUCCESS)
+		return result;
+
+	    result = dc1394_external_trigger_set_power(dc_camera, DC1394_ON);
+	}
+	else
+	{
+	    result = dc1394_external_trigger_set_power(dc_camera, DC1394_OFF);
+	    if(result != DC1394_SUCCESS)
+		return result;
+
+	    result = dc1394_software_trigger_set_power(dc_camera, DC1394_ON);
+	}
+	
+	return result;
+}
 
 // set enum attributes
 bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
@@ -859,10 +926,49 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
 
     switch (attrib)
     {
+	case enum_attrib::FrameStartTriggerModeToSyncIn1:
+	    result = setTriggerSource(DC1394_TRIGGER_SOURCE_0);
+	    break;
 	
+	case enum_attrib::FrameStartTriggerModeToSyncIn2:
+	    result = setTriggerSource(DC1394_TRIGGER_SOURCE_1);
+	    break;
 	
+	case enum_attrib::FrameStartTriggerModeToSyncIn3:
+	    result = setTriggerSource(DC1394_TRIGGER_SOURCE_2);
+	    break;
 
+	case enum_attrib::FrameStartTriggerModeToSyncIn4:
+	    result = setTriggerSource(DC1394_TRIGGER_SOURCE_3);
+	    break;
 
+	    
+	case enum_attrib::FrameStartTriggerEventToEdgeRising:
+	    //note this is a hack, as the camera interface does not support
+	    //trigger mode 1. We hardcode to Mode 0
+	    
+	    //Mode zero triggers on falling edgde by default, therefore 
+	    //we invert the polarity, that should in theory give us Rising edge
+	    result = dc1394_external_trigger_set_polarity(dc_camera, DC1394_TRIGGER_ACTIVE_HIGH);
+	    if(checkHandleError(result))
+		return false;
+	    
+	    result = dc1394_external_trigger_set_mode(dc_camera, DC1394_TRIGGER_MODE_0);
+	    if(checkHandleError(result))
+		return false;
+	    
+	    break;
+	    
+	case enum_attrib::FrameStartTriggerEventToEdgeFalling:
+	    result = dc1394_external_trigger_set_polarity(dc_camera, DC1394_TRIGGER_ACTIVE_LOW);
+	    if(checkHandleError(result))
+		return false;
+	    
+	    result = dc1394_external_trigger_set_mode(dc_camera, DC1394_TRIGGER_MODE_0);
+	    if(checkHandleError(result))
+		return false;
+	    break;
+	    
 	// turn gamma on
 	case enum_attrib::GammaToOn:
 	    feature = DC1394_FEATURE_GAMMA;
