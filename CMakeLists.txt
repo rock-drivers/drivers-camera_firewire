@@ -56,6 +56,10 @@ pkg_check_modules(CAM_INTERFACE REQUIRED "camera_interface")
 include_directories(${CAM_INTERFACE_INCLUDE_DIRS})
 link_directories(${CAM_INTERFACE_LIBRARY_DIRS})
 
+pkg_check_modules(BASE_LIB REQUIRED "base-lib")
+include_directories(${BASE_LIB_INCLUDE_DIRS})
+link_directories(${BASE_LIB_LIBRARY_DIRS})
+
 if (TEST_ENABLED)
 pkg_check_modules(OPENCV REQUIRED "opencv")
 include_directories(${OPENCV_INCLUDE_DIRS})
