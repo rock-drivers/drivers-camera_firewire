@@ -1090,6 +1090,9 @@ bool CamFireWire::setAttrib(const double_attrib::CamAttrib attrib, const double 
     // the desired video framerate
     dc1394framerate_t framerate;
     
+    //result of the set operation
+    dc1394error_t result = DC1394_SUCCESS;
+    
     switch (attrib)
     {
     // set the framerate
@@ -1098,23 +1101,32 @@ bool CamFireWire::setAttrib(const double_attrib::CamAttrib attrib, const double 
             framerate = DC1394_FRAMERATE_30;
         else if (value==60)
             framerate = DC1394_FRAMERATE_60;
+        else if (value==120)
+            framerate = DC1394_FRAMERATE_120;
+        else if (value==240)
+            framerate = DC1394_FRAMERATE_240;
         else if (value==15)
             framerate = DC1394_FRAMERATE_15;
-        else if (value==8)
+        else if (value==7.5)
             framerate = DC1394_FRAMERATE_7_5;
-        else if (value==4)
+        else if (value==3.75)
             framerate = DC1394_FRAMERATE_3_75;
+        else if (value == 1.875)
+            framerate = DC1394_FRAMERATE_1_875;
         else
-            throw std::runtime_error("Framerate not supported! Use 15, 30 or 60 fps.");
+            throw std::runtime_error("Framerate not supported!");
 
-	// the actual framerate-setting
-        dc1394_video_set_framerate(dc_camera, framerate);
+        // the actual framerate-setting
+        result = dc1394_video_set_framerate(dc_camera, framerate);
         break;
     
     // attribute unknown or not supported (yet)
     default:
         throw std::runtime_error("Unknown attribute!");
     };
+    
+    if(checkHandleError(result))
+        return false;
     
     return true;
 };
