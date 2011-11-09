@@ -243,7 +243,8 @@ bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
 
     int ret = dc1394_capture_dequeue(dc_camera, DC1394_CAPTURE_POLICY_POLL, &tmp_frame);
     
-    frame.init(image_size_.width, image_size_.height, data_depth, frame_mode, hdr_enabled);
+    frame.init(image_size_.width, image_size_.height, data_depth, frame_mode);
+    frame.setHDR(hdr_enabled);
 
     if(ret == DC1394_SUCCESS)
     {
