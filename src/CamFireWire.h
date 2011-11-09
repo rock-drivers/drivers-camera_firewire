@@ -14,6 +14,7 @@
 #include "./cam_fw_types.h"
 #include <dc1394/types.h>
 #include <dc1394/log.h>
+#include <dc1394/video.h>
 
 struct __dc1394_camera;
 typedef __dc1394_camera dc1394camera_t;
@@ -67,6 +68,7 @@ public:
 
 private:
     bool isVideoModeSupported(const dc1394video_mode_t mode);
+    bool isFramerateSupported(const dc1394framerate_t framerate);
     bool isVideo7RAWModeSupported(int depth);
     dc1394error_t setTriggerSource(const dc1394trigger_source_t trigger_source);
     

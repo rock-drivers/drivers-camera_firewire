@@ -1134,9 +1134,23 @@ bool CamFireWire::setAttrib(const double_attrib::CamAttrib attrib, const double 
             framerate = DC1394_FRAMERATE_1_875;
         else
             throw std::runtime_error("Framerate not supported!");
-
-        // the actual framerate-setting
-        result = dc1394_video_set_framerate(dc_camera, framerate);
+        
+        dc1394video_mode_t video_mode;
+        dc1394_video_get_mode(dc_camera, &video_mode);
+        if(video_mode >= DC1394_VIDEO_MODE_MAX - 7)
+        {
+            int num_packets = (int) (1.0/(125e-6*value) + 0.5);
+            int denominator = num_packets*8;
+            int packet_size = (image_size_.height*image_size_.width*data_depth + denominator - 1)/denominator;
+            result = dc1394_format7_set_packet_size(dc_camera, video_mode, packet_size);
+        }
+        else
+        {
+            if(!isFramerateSupported(framerate))
+                throw std::runtime_error("Framerate is not supported by the actual video mode!");
+            // the actual framerate-setting
+            result = dc1394_video_set_framerate(dc_camera, framerate);
+        }
         break;
     
     // attribute unknown or not supported (yet)
@@ -1149,6 +1163,26 @@ bool CamFireWire::setAttrib(const double_attrib::CamAttrib attrib, const double 
     
     return true;
 };
+
+bool CamFireWire::isFramerateSupported(const dc1394framerate_t framerate)
+{
+    dc1394video_mode_t video_mode;
+    dc1394framerates_t supported_framerates;
+    dc1394_video_get_mode(dc_camera, &video_mode);
+    if(video_mode >= DC1394_VIDEO_MODE_MAX - 7)
+        return true;
+    dc1394_video_get_supported_framerates(dc_camera, video_mode, &supported_framerates);
+    bool supported = false; 
+    for(int i = 0; i < supported_framerates.num; i++)
+    {
+        if(supported_framerates.framerates[i] == framerate)
+        {
+            supported = true;
+            break;
+        }
+    }
+    return supported;
+}
 
 // returns true whenever a frame is available
 bool CamFireWire::isFrameAvailable()
