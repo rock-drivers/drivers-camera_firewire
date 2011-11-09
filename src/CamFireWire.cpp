@@ -565,9 +565,18 @@ bool CamFireWire::checkForTriggerSource(const dc1394trigger_source_t source)
 {
     dc1394error_t ret = DC1394_SUCCESS;
     dc1394trigger_sources_t sources;
-
+    
+    /* fix an error: check if camera is a 'Guppy F036C'
+     * in this case the camera does provide the trigger source 0 and a trigger source software,
+     * even if it tells it doesn't.
+     */
+    if((source == DC1394_TRIGGER_SOURCE_0 || source == DC1394_TRIGGER_SOURCE_SOFTWARE)
+        && (strcmp(dc_camera->model, "Guppy F036C") == 0))
+        return true;
+    
     //get list of supported sources from camera
     ret = dc1394_external_trigger_get_supported_sources(dc_camera, &sources);
+    
     if(checkHandleError(ret))
 	return false;
     
@@ -618,13 +627,16 @@ bool CamFireWire::isAttribAvail(const enum_attrib::CamAttrib attrib)
 	case enum_attrib::FrameStartTriggerModeToSyncIn4:
 	    return checkForTriggerSource(DC1394_TRIGGER_SOURCE_3);
 	break;
+    case enum_attrib::FrameStartTriggerModeToFreerun:
 	case enum_attrib::FrameStartTriggerModeToSoftware:
 	    return checkForTriggerSource(DC1394_TRIGGER_SOURCE_SOFTWARE);
 	break;
-
 	case enum_attrib::FrameStartTriggerEventToEdgeRising:
-	  return true;
-	  break;
+        return true;
+        break;
+    case enum_attrib::FrameStartTriggerEventToEdgeFalling:
+        return true;
+        break;
     case enum_attrib::GammaToOn:
         feature = DC1394_FEATURE_GAMMA;
         break;
@@ -942,17 +954,14 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
 	case enum_attrib::FrameStartTriggerModeToSyncIn4:
 	    result = setTriggerSource(DC1394_TRIGGER_SOURCE_3);
 	    break;
+        
+    case enum_attrib::FrameStartTriggerModeToFreerun:
+    case enum_attrib::FrameStartTriggerModeToSoftware:
+        result = setTriggerSource(DC1394_TRIGGER_SOURCE_SOFTWARE);
+        break;
 
 	    
 	case enum_attrib::FrameStartTriggerEventToEdgeRising:
-	    result = dc1394_software_trigger_set_power(dc_camera, DC1394_OFF);
-	    if(result != DC1394_SUCCESS)
-	      return false;
-
-	    result = dc1394_external_trigger_set_power(dc_camera, DC1394_ON);
-	    if(result != DC1394_SUCCESS)
-	      return false;
-
 	    //note this is a hack, as the camera interface does not support
 	    //trigger mode 1. We hardcode to Mode 0
 	    
@@ -969,14 +978,6 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
 	    break;
 	    
 	case enum_attrib::FrameStartTriggerEventToEdgeFalling:
-	    result = dc1394_software_trigger_set_power(dc_camera, DC1394_OFF);
-	    if(result != DC1394_SUCCESS)
-	      return false;
-
-	    result = dc1394_external_trigger_set_power(dc_camera, DC1394_ON);
-	    if(result != DC1394_SUCCESS)
-	      return false;
-
 	    result = dc1394_external_trigger_set_polarity(dc_camera, DC1394_TRIGGER_ACTIVE_LOW);
 	    if(checkHandleError(result))
 		return false;
