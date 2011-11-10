@@ -916,6 +916,10 @@ dc1394error_t CamFireWire::setTriggerSource(const dc1394trigger_source_t trigger
 	
 	if(trigger_source != DC1394_TRIGGER_SOURCE_SOFTWARE)
 	{
+        result = dc1394_feature_set_power(dc_camera, DC1394_FEATURE_TRIGGER, DC1394_ON);
+        if(result != DC1394_SUCCESS)
+        return result;
+        
 	    result = dc1394_software_trigger_set_power(dc_camera, DC1394_OFF);
 	    if(result != DC1394_SUCCESS)
 		return result;
@@ -924,6 +928,10 @@ dc1394error_t CamFireWire::setTriggerSource(const dc1394trigger_source_t trigger
 	}
 	else
 	{
+        result = dc1394_feature_set_power(dc_camera, DC1394_FEATURE_TRIGGER, DC1394_OFF);
+        if(result != DC1394_SUCCESS)
+        return result;
+        
 	    result = dc1394_external_trigger_set_power(dc_camera, DC1394_OFF);
 	    if(result != DC1394_SUCCESS)
 		return result;
