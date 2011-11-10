@@ -190,9 +190,8 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
         err = dc1394_capture_setup(dc_camera, buffer_len, DC1394_CAPTURE_FLAGS_DEFAULT);
         if(checkHandleError(err))
             return false;
-        dc1394_video_set_transmission(dc_camera, DC1394_ON);
-	
-        dc1394_feature_set_power(dc_camera, DC1394_FEATURE_TRIGGER, DC1394_ON);
+        
+        err = dc1394_video_set_transmission(dc_camera,DC1394_ON);
         break;
 
     // grab N frames (N previously defined by setting AcquisitionFrameCount
@@ -215,8 +214,6 @@ bool CamFireWire::grab(const GrabMode mode, const int buffer_len)
         err = dc1394_capture_setup(dc_camera,buffer_len,DC1394_CAPTURE_FLAGS_DEFAULT);
         if(checkHandleError(err))
             return false;
-        dc1394_feature_set_power(dc_camera, DC1394_FEATURE_TRIGGER, DC1394_OFF);
-        dc1394_software_trigger_set_power(dc_camera,DC1394_ON);
 	
         err = dc1394_video_set_transmission(dc_camera,DC1394_ON);
         if(checkHandleError(err))
