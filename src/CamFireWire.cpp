@@ -581,14 +581,6 @@ bool CamFireWire::checkForTriggerSource(const dc1394trigger_source_t source)
     dc1394error_t ret = DC1394_SUCCESS;
     dc1394trigger_sources_t sources;
     
-    /* fix an error: check if camera is a 'Guppy F036C'
-     * in this case the camera does provide the trigger source 0 and a trigger source software,
-     * even if it tells it doesn't.
-     */
-    if((source == DC1394_TRIGGER_SOURCE_0 || source == DC1394_TRIGGER_SOURCE_SOFTWARE)
-        && (strcmp(dc_camera->model, "Guppy F036C") == 0))
-        return true;
-    
     //get list of supported sources from camera
     ret = dc1394_external_trigger_get_supported_sources(dc_camera, &sources);
     
@@ -601,6 +593,17 @@ bool CamFireWire::checkForTriggerSource(const dc1394trigger_source_t source)
 	if(sources.sources[i] == source)
 	    return true;
     }
+    
+    /* fix an error: check if camera has the external trigger feature
+     * in this case the camera does provide the trigger source 0 and a trigger source software,
+     * even if it tells it doesn't.
+     */
+    dc1394bool_t present;
+    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_TRIGGER, &present);
+    if(checkHandleError(ret))
+        return false;
+    if((source == DC1394_TRIGGER_SOURCE_0 || source == DC1394_TRIGGER_SOURCE_SOFTWARE) && present == DC1394_TRUE)
+        return true;
     
     //we don't support 'source'
     return false;
