@@ -646,6 +646,7 @@ bool CamFireWire::isAttribAvail(const enum_attrib::CamAttrib attrib)
 	    return checkForTriggerSource(DC1394_TRIGGER_SOURCE_3);
 	break;
     case enum_attrib::FrameStartTriggerModeToFreerun:
+    case enum_attrib::FrameStartTriggerModeToFixedRate:
 	case enum_attrib::FrameStartTriggerModeToSoftware:
 	    return checkForTriggerSource(DC1394_TRIGGER_SOURCE_SOFTWARE);
 	break;
@@ -982,6 +983,7 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
 	    break;
         
     case enum_attrib::FrameStartTriggerModeToFreerun:
+    case enum_attrib::FrameStartTriggerModeToFixedRate:
     case enum_attrib::FrameStartTriggerModeToSoftware:
         result = setTriggerSource(DC1394_TRIGGER_SOURCE_SOFTWARE);
         break;
