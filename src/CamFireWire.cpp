@@ -64,6 +64,9 @@ CamFireWire::~CamFireWire()
 
 bool CamFireWire::setDevice(dc1394_t *dev)
 {
+    if(!dev)
+	return false;
+    
     dc_device = dev;
     return true;
 }
@@ -75,23 +78,33 @@ int CamFireWire::listCameras(std::vector<CamInfo>&cam_infos)const
     dc1394error_t err;
 
     if (!dc_device)
-	return 0;
+	return -1;
 
     // get list of available cameras
-    err = dc1394_camera_enumerate (dc_device, &list);
+    if(checkHandleError(dc1394_camera_enumerate (dc_device, &list)))
+	return -1;
 
     // temporary camera pointer (for getting the cam_infos)
     dc1394camera_t *tmp_camera;
 
     // if no camera is found on the bus
     if (list->num == 0)
+    {
         std::cout << "no cam found!" << std::endl;
+	return -1;
+    }
 
     // get the cam_info for each camera on the bus
     for (int i = 0 ; i < list->num ; i++)
     {
 	// get the i-th camera
         tmp_camera = dc1394_camera_new(dc_device, list->ids[i].guid);
+	if(!tmp_camera)
+	{
+	    std::cout << "failed to open camera for listing!" << std::endl;
+	    dc1394_camera_free_list(list);
+	    return -1;
+	}
         
 	// get and set the corresponding cam_info
 	CamInfo cam_info;
@@ -103,30 +116,38 @@ int CamFireWire::listCameras(std::vector<CamInfo>&cam_infos)const
         cam_infos.push_back(cam_info);
         dc1394_camera_free(tmp_camera);
     }
+    
+    int numCams = list->num;
+    
+    dc1394_camera_free_list(list);
 
     // return the number of cameras found
-    return list->num;
+    return numCams;
 }
 
 // open the camera specified by the CamInfo cam
 bool CamFireWire::open(const CamInfo &cam,const AccessMode mode)
 {
-    dc1394camera_list_t *list = 0;
-
     if (!dc_device)
 	return false;
 
-    // get list of available cameras
-    dc1394_camera_enumerate (dc_device, &list);
-    
     // get camera with the given uid and release the list
     dc_camera = dc1394_camera_new(dc_device, cam.unique_id);
-    dc1394_camera_free_list(list);
+    if(!dc_camera)
+	return false;
     
     // set the current grab mode to "Stop"
     act_grab_mode_= Stop;
 
-    dc1394_camera_set_broadcast(dc_camera, DC1394_FALSE);
+    if(checkHandleError(dc1394_camera_set_broadcast(dc_camera, DC1394_FALSE)))
+    {
+	if(dc_camera)
+	{
+	    dc1394_camera_free(dc_camera);
+	    dc_camera = 0;
+	    return false;
+	}
+    }
 
     return true;
 }
@@ -477,7 +498,8 @@ bool CamFireWire::isVideoModeSupported(const dc1394video_mode_t mode)
     return false;
     
     dc1394video_modes_t vmst;
-    dc1394_video_get_supported_modes(dc_camera,&vmst);
+    if(checkHandleError(dc1394_video_get_supported_modes(dc_camera,&vmst)))
+	return false;
     
        
     bool mode_supported = false;
@@ -496,7 +518,8 @@ bool CamFireWire::isVideoModeSupported(const dc1394video_mode_t mode)
 bool CamFireWire::isVideo7RAWModeSupported(int depth)
 {
     dc1394color_codings_t codings;
-    dc1394_format7_get_color_codings(dc_camera, DC1394_VIDEO_MODE_FORMAT7_0, &codings);
+    if(checkHandleError(dc1394_format7_get_color_codings(dc_camera, DC1394_VIDEO_MODE_FORMAT7_0, &codings)))
+	return false;
     
     dc1394color_coding_t coding = DC1394_COLOR_CODING_RAW8;
     if (depth == 16)
@@ -522,36 +545,33 @@ bool CamFireWire::isAttribAvail(const int_attrib::CamAttrib attrib)
 	return false;
     
     dc1394bool_t isPresent = DC1394_FALSE;
-
+    dc1394error_t ret = DC1394_SUCCESS;
+    
     switch (attrib)
     {
-    case int_attrib::ExposureValue:
-        dc1394_feature_is_present(dc_camera, DC1394_FEATURE_SHUTTER, &isPresent);
-        return (bool)isPresent;
-    case int_attrib::GainValue:
-        dc1394_feature_is_present(dc_camera, DC1394_FEATURE_GAIN, &isPresent);
-        return (bool)isPresent;
-    case int_attrib::WhitebalValueRed:
-        dc1394_feature_is_present(dc_camera, DC1394_FEATURE_WHITE_BALANCE, &isPresent);
-        return (bool)isPresent;
-    case int_attrib::WhitebalValueBlue:
-        dc1394_feature_is_present(dc_camera, DC1394_FEATURE_WHITE_BALANCE, &isPresent);
-        return (bool)isPresent;
-    case int_attrib::IsoSpeed:
-        return true;
-    case int_attrib::AcquisitionFrameCount:
-        return true;
-    case int_attrib::HDRValue:
-        dc1394_avt_adv_feature_info_t avt_info;
-        dc1394_avt_get_advanced_feature_inquiry(dc_camera, &avt_info);
-        if(avt_info.HDR_Mode == DC1394_TRUE)
-            return true;
-        else
-            return false;
-    default:
-        return false;
+	case int_attrib::ExposureValue:
+	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_SHUTTER, &isPresent);
+	case int_attrib::GainValue:
+	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_GAIN, &isPresent);
+	case int_attrib::WhitebalValueRed:
+	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_WHITE_BALANCE, &isPresent);
+	case int_attrib::WhitebalValueBlue:
+	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_WHITE_BALANCE, &isPresent);
+	case int_attrib::IsoSpeed:
+	    return true;
+	case int_attrib::AcquisitionFrameCount:
+	    return true;
+	case int_attrib::HDRValue:
+	    dc1394_avt_adv_feature_info_t avt_info;
+	    ret = dc1394_avt_get_advanced_feature_inquiry(dc_camera, &avt_info);
+	    isPresent = avt_info.HDR_Mode;
+	default:
+	    return false;
     };
-    return false;
+    if(checkHandleError(ret))
+	return false;
+
+    return (bool)isPresent;
 }
 
 // check if double-valued attributes are available
@@ -583,7 +603,6 @@ bool CamFireWire::checkForTriggerSource(const dc1394trigger_source_t source)
     
     //get list of supported sources from camera
     ret = dc1394_external_trigger_get_supported_sources(dc_camera, &sources);
-    
     if(checkHandleError(ret))
 	return false;
     
@@ -1178,10 +1197,15 @@ bool CamFireWire::isFramerateSupported(const dc1394framerate_t framerate)
 {
     dc1394video_mode_t video_mode;
     dc1394framerates_t supported_framerates;
-    dc1394_video_get_mode(dc_camera, &video_mode);
+    if(checkHandleError(dc1394_video_get_mode(dc_camera, &video_mode)))
+	return false;
+    
     if(video_mode >= DC1394_VIDEO_MODE_MAX - 7)
         return true;
-    dc1394_video_get_supported_framerates(dc_camera, video_mode, &supported_framerates);
+    
+    if(checkHandleError(dc1394_video_get_supported_framerates(dc_camera, video_mode, &supported_framerates)))
+	return false;
+    
     bool supported = false; 
     for(int i = 0; i < supported_framerates.num; i++)
     {
@@ -1228,13 +1252,18 @@ bool CamFireWire::clearBuffer()
         err = dc1394_capture_dequeue(dc_camera,DC1394_CAPTURE_POLICY_POLL, &tmp);
         if (tmp && err==DC1394_SUCCESS)
         {
-            dc1394_capture_enqueue(dc_camera, tmp);
+            if(checkHandleError(dc1394_capture_enqueue(dc_camera, tmp)))
+	    {
+		std::cout << "clearBuffer(): Failed to enqueue frame" << std::endl;
+		return false;
+	    };
         } 
         else
         {
            endFound=true;
         }
     }
+    return true;
 } // end clearBuffer
 
 int CamFireWire::getFileDescriptor() const
