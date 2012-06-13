@@ -551,12 +551,16 @@ bool CamFireWire::isAttribAvail(const int_attrib::CamAttrib attrib)
     {
 	case int_attrib::ExposureValue:
 	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_SHUTTER, &isPresent);
+	    break;
 	case int_attrib::GainValue:
 	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_GAIN, &isPresent);
+	    break;
 	case int_attrib::WhitebalValueRed:
 	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_WHITE_BALANCE, &isPresent);
+	    break;
 	case int_attrib::WhitebalValueBlue:
 	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_WHITE_BALANCE, &isPresent);
+	    break;
 	case int_attrib::IsoSpeed:
 	    return true;
 	case int_attrib::AcquisitionFrameCount:
@@ -565,6 +569,7 @@ bool CamFireWire::isAttribAvail(const int_attrib::CamAttrib attrib)
 	    dc1394_avt_adv_feature_info_t avt_info;
 	    ret = dc1394_avt_get_advanced_feature_inquiry(dc_camera, &avt_info);
 	    isPresent = avt_info.HDR_Mode;
+	    break;
 	default:
 	    return false;
     };
