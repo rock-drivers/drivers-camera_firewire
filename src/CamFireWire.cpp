@@ -1171,11 +1171,26 @@ bool CamFireWire::setAttrib(const double_attrib::CamAttrib attrib, const double 
         
         dc1394video_mode_t video_mode;
         dc1394_video_get_mode(dc_camera, &video_mode);
-        if(video_mode >= DC1394_VIDEO_MODE_MAX - 7)
+        if(DC1394_VIDEO_MODE_FORMAT7_MIN <= video_mode && video_mode <= DC1394_VIDEO_MODE_FORMAT7_MAX)
         {
-            int num_packets = (int) (1.0/(125e-6*value) + 0.5);
-            int denominator = num_packets*8;
-            int packet_size = (image_size_.height*image_size_.width*data_depth + denominator - 1)/denominator;
+            unsigned int unit_bytes, max_bytes;
+            if(checkHandleError(dc1394_format7_get_packet_parameters(dc_camera, video_mode, &unit_bytes, &max_bytes)))
+                return false;
+
+            //frame_size [bytes] * frame_rate [Hz] / 8000 Hz (see FAQ v2 for libdc1394)
+            unsigned int packet_size = image_size_.height*image_size_.width * value/8000;
+
+            if (unit_bytes == 0)
+                unit_bytes = max_bytes;
+
+            if (packet_size > max_bytes)
+                packet_size = max_bytes;
+            else if (packet_size < unit_bytes)
+                packet_size = unit_bytes;
+
+            //round down to multiple of unit_bytes. This is needed for correct setting of packet_size.
+            packet_size -= packet_size % unit_bytes;
+
             result = dc1394_format7_set_packet_size(dc_camera, video_mode, packet_size);
         }
         else
