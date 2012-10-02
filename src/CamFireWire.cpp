@@ -12,6 +12,7 @@
 #include <dc1394/vendor/avt.h>
 #include <base/logging.h>
 #include <dc1394/control.h>
+#include <unistd.h>
 
 
 using namespace base::samples::frame;
