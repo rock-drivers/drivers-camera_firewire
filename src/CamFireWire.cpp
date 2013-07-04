@@ -290,7 +290,7 @@ bool CamFireWire::retrieveFrame(Frame &frame,const int timeout)
         }
         else
         {
-            frame.setImage((const char *)tmp_frame->image, tmp_frame->size[0] * tmp_frame->size[1]);
+            frame.setImage((const char *)tmp_frame->image, tmp_frame->image_bytes);
             // set the frame's timestamps (secs and usecs)
             frame.time = base::Time::fromMicroseconds(tmp_frame->timestamp);
             frame.setStatus(STATUS_VALID);
