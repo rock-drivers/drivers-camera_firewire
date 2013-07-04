@@ -1137,12 +1137,6 @@ bool CamFireWire::setAttrib(const double_attrib::CamAttrib attrib, const double 
 {
     if (!dc_camera)
 	return false;
-
-    // the feature/attribute we want to set
-    dc1394feature_t feature;
-    
-    // the desired video framerate
-    dc1394framerate_t framerate;
     
     //result of the set operation
     dc1394error_t result = DC1394_SUCCESS;
@@ -1151,25 +1145,6 @@ bool CamFireWire::setAttrib(const double_attrib::CamAttrib attrib, const double 
     {
     // set the framerate
     case double_attrib::FrameRate:
-        if (value==30)
-            framerate = DC1394_FRAMERATE_30;
-        else if (value==60)
-            framerate = DC1394_FRAMERATE_60;
-        else if (value==120)
-            framerate = DC1394_FRAMERATE_120;
-        else if (value==240)
-            framerate = DC1394_FRAMERATE_240;
-        else if (value==15)
-            framerate = DC1394_FRAMERATE_15;
-        else if (value==7.5)
-            framerate = DC1394_FRAMERATE_7_5;
-        else if (value==3.75)
-            framerate = DC1394_FRAMERATE_3_75;
-        else if (value == 1.875)
-            framerate = DC1394_FRAMERATE_1_875;
-        else
-            throw std::runtime_error("Framerate not supported!");
-        
         dc1394video_mode_t video_mode;
         dc1394_video_get_mode(dc_camera, &video_mode);
         if(DC1394_VIDEO_MODE_FORMAT7_MIN <= video_mode && video_mode <= DC1394_VIDEO_MODE_FORMAT7_MAX)
@@ -1184,18 +1159,38 @@ bool CamFireWire::setAttrib(const double_attrib::CamAttrib attrib, const double 
             if (unit_bytes == 0)
                 unit_bytes = max_bytes;
 
-            if (packet_size > max_bytes)
-                packet_size = max_bytes;
-            else if (packet_size < unit_bytes)
-                packet_size = unit_bytes;
+            //round up to multiple of unit_bytes. This is needed for correct setting of packet_size.
+            packet_size = (packet_size + unit_bytes - 1) / unit_bytes * unit_bytes;
 
-            //round down to multiple of unit_bytes. This is needed for correct setting of packet_size.
-            packet_size -= packet_size % unit_bytes;
+            if (packet_size > max_bytes)
+                throw std::runtime_error("Framerate too high for this mode 7");
 
             result = dc1394_format7_set_packet_size(dc_camera, video_mode, packet_size);
         }
         else
         {
+            // the desired video framerate
+            dc1394framerate_t framerate;
+
+            if (value==30)
+                framerate = DC1394_FRAMERATE_30;
+            else if (value==60)
+                framerate = DC1394_FRAMERATE_60;
+            else if (value==120)
+                framerate = DC1394_FRAMERATE_120;
+            else if (value==240)
+                framerate = DC1394_FRAMERATE_240;
+            else if (value==15)
+                framerate = DC1394_FRAMERATE_15;
+            else if (value==7.5)
+                framerate = DC1394_FRAMERATE_7_5;
+            else if (value==3.75)
+                framerate = DC1394_FRAMERATE_3_75;
+            else if (value == 1.875)
+                framerate = DC1394_FRAMERATE_1_875;
+            else
+                throw std::runtime_error("Framerate not supported by the dc1394 protocol!");
+        
             if(!isFramerateSupported(framerate))
                 throw std::runtime_error("Framerate is not supported by the actual video mode!");
             // the actual framerate-setting
