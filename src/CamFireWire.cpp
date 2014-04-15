@@ -340,7 +340,28 @@ bool CamFireWire::setFrameSettings(const frame_size_t size,
     case MODE_BAYER_RGGB:
     case MODE_BAYER_GRBG:
     case MODE_BAYER_GBRG:
-        if (isVideoModeSupported(DC1394_VIDEO_MODE_FORMAT7_0) && isVideo7RAWModeSupported(data_depth))
+        if (isVideoModeSupported(DC1394_VIDEO_MODE_FORMAT7_3) && isVideo7RAWModeSupported(data_depth))
+        {
+            selected_mode = DC1394_VIDEO_MODE_FORMAT7_3;
+            uint32_t max_height = 0;
+            uint32_t max_width = 0;
+            dc1394_format7_get_max_image_size(dc_camera, selected_mode, &max_width, &max_height);
+            if (size.height <= max_height && size.width <= max_width)
+            {
+                dc1394_format7_set_image_size(dc_camera, selected_mode, size.width, size.height);
+                dc1394_format7_set_image_position(dc_camera, selected_mode, 
+                                            (max_width - (uint32_t)size.width) * 0.5, 
+                                            (max_height - (uint32_t)size.height) * 0.5);
+                dc1394_format7_set_color_coding(dc_camera, selected_mode, 
+                                             data_depth == 16 ? DC1394_COLOR_CODING_RAW16 : DC1394_COLOR_CODING_RAW8);
+            }
+            else
+            {
+                throw std::runtime_error("Resolution is not supported!");
+            }
+            break;
+        }
+        else if (isVideoModeSupported(DC1394_VIDEO_MODE_FORMAT7_0) && isVideo7RAWModeSupported(data_depth))
         {
             selected_mode = DC1394_VIDEO_MODE_FORMAT7_0;
             uint32_t max_height = 0;
