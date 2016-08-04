@@ -9,7 +9,7 @@
 #define	_CAMFIREWIRE_H
 
 #include "camera_interface/CamInterface.h"
-#include "base/samples/frame.h"
+#include "base/samples/Frame.hpp"
 #include "./filter/frame2rggb.h"
 #include "./cam_fw_types.h"
 #include <dc1394/types.h>

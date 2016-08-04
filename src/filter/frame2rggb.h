@@ -1,7 +1,7 @@
 #ifndef FILTER_FRAME2RGGB
 #define FILTER_FRAME2RGGB 1
 
-#include "base/samples/frame.h"
+#include "base/samples/Frame.hpp"
 
 namespace filter
 {

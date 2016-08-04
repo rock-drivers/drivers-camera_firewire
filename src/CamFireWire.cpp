@@ -10,7 +10,7 @@
 #include "CamFireWire.h"
 #include <dc1394/dc1394.h>
 #include <dc1394/vendor/avt.h>
-#include <base/logging.h>
+#include <base-logging/Logging.hpp>
 #include <dc1394/control.h>
 #include <unistd.h>
 
