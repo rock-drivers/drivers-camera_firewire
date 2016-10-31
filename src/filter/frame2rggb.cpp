@@ -1,6 +1,7 @@
 #include "frame2rggb.h"
 
 #include <dc1394/conversions.h>
+#include <iostream>
 
 using namespace base::samples::frame;
 namespace filter
