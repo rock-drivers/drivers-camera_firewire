@@ -795,6 +795,9 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
         dc1394speed_t speed;
         switch (value)
         {
+        case 800:
+            speed = DC1394_ISO_SPEED_800;
+            break;
         case 400:
             speed = DC1394_ISO_SPEED_400;
             break;
@@ -809,7 +812,18 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
         };
         ret = dc1394_video_set_iso_speed(dc_camera, speed);
         break;
-	
+	case int_attrib::OperationMode:
+	    dc1394operation_mode_t mode;
+	    switch(value)
+	    {
+	    case 'B':
+	        mode = DC1394_OPERATION_MODE_1394B;
+	        break;
+        default:
+            mode = DC1394_OPERATION_MODE_LEGACY;
+	    }
+	    ret = dc1394_video_set_operation_mode(dc_camera, mode);
+	    break;
     // set the number of frames to capture in multi-shot mode
     case int_attrib::AcquisitionFrameCount:
         multi_shot_count = value;
