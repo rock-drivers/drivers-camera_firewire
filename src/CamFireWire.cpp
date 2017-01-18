@@ -352,8 +352,23 @@ bool CamFireWire::setFrameSettings(const frame_size_t size,
                 dc1394_format7_set_image_position(dc_camera, selected_mode, 
                                             (max_width - (uint32_t)size.width) * 0.5, 
                                             (max_height - (uint32_t)size.height) * 0.5);
-                dc1394_format7_set_color_coding(dc_camera, selected_mode, 
-                                             data_depth == 16 ? DC1394_COLOR_CODING_RAW16 : DC1394_COLOR_CODING_RAW8);
+                    
+                dc1394color_coding_t depth;
+                switch(data_depth)
+                {
+                    case 8:
+                        depth = DC1394_COLOR_CODING_RAW8;
+                        break;
+                    case 16:
+                        depth = DC1394_COLOR_CODING_RAW16;
+                        break;
+                    case 24:
+                        depth = DC1394_COLOR_CODING_RGB8;
+                        break;
+                    default:
+                        throw std::runtime_error("Data depth is not supported!");
+                }
+                dc1394_format7_set_color_coding(dc_camera, selected_mode, depth);
             }
             else
             {
