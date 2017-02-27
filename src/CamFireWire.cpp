@@ -592,6 +592,12 @@ bool CamFireWire::isAttribAvail(const int_attrib::CamAttrib attrib)
 	case int_attrib::GainValue:
 	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_GAIN, &isPresent);
 	    break;
+	case int_attrib::SaturationValue:
+	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_SATURATION, &isPresent);
+	    break;
+	case int_attrib::SharpnessValue:
+	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_SHARPNESS, &isPresent);
+	    break;
 	case int_attrib::ShutterValue:
 	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_SHUTTER, &isPresent);
 	    break;
@@ -692,80 +698,142 @@ bool CamFireWire::isAttribAvail(const enum_attrib::CamAttrib attrib)
     
     dc1394feature_t feature;
 
-    
     dc1394error_t ret = DC1394_SUCCESS;
-    
+    dc1394bool_t isAvailable = DC1394_FALSE;
     switch (attrib)
     {
 	case enum_attrib::FrameStartTriggerModeToSyncIn1:
 	    return checkForTriggerSource(DC1394_TRIGGER_SOURCE_0);
-	break;
+	    break;
 	case enum_attrib::FrameStartTriggerModeToSyncIn2:
 	    return checkForTriggerSource(DC1394_TRIGGER_SOURCE_1);
-	break;
+	    break;
 	case enum_attrib::FrameStartTriggerModeToSyncIn3:
 	    return checkForTriggerSource(DC1394_TRIGGER_SOURCE_2);
-	break;
+	    break;
 	case enum_attrib::FrameStartTriggerModeToSyncIn4:
 	    return checkForTriggerSource(DC1394_TRIGGER_SOURCE_3);
-	break;
-    case enum_attrib::FrameStartTriggerModeToFreerun:
-    case enum_attrib::FrameStartTriggerModeToFixedRate:
+	    break;
+	case enum_attrib::FrameStartTriggerModeToFreerun:
+	case enum_attrib::FrameStartTriggerModeToFixedRate:
 	case enum_attrib::FrameStartTriggerModeToSoftware:
 	    return checkForTriggerSource(DC1394_TRIGGER_SOURCE_SOFTWARE);
-	break;
+	    break;
 	case enum_attrib::FrameStartTriggerEventToEdgeRising:
-        return true;
-        break;
-    case enum_attrib::FrameStartTriggerEventToEdgeFalling:
-        return true;
-        break;
+	    return true;
+	    break;
+	case enum_attrib::FrameStartTriggerEventToEdgeFalling:
+	    ret = dc1394_feature_is_present(dc_camera, feature, &isAvailable);
+	    return true;
+	    break;
     case enum_attrib::GammaToOn:
         feature = DC1394_FEATURE_GAMMA;
+	ret = dc1394_feature_is_switchable(dc_camera, feature, &isAvailable);
         break;
     case enum_attrib::GammaToOff:
         feature = DC1394_FEATURE_GAMMA;
+	ret = dc1394_feature_is_switchable(dc_camera, feature, &isAvailable);
+        break;
+    case enum_attrib::ExposureToOn:
+        feature = DC1394_FEATURE_EXPOSURE;
+	ret = dc1394_feature_is_switchable(dc_camera, feature, &isAvailable);
+        break;
+    case enum_attrib::ExposureToOff:
+        feature = DC1394_FEATURE_EXPOSURE;
+	ret = dc1394_feature_is_switchable(dc_camera, feature, &isAvailable);
         break;
     case enum_attrib::ExposureModeToAuto:
         feature = DC1394_FEATURE_EXPOSURE;
+	ret = dc1394_feature_is_present(dc_camera, feature, &isAvailable);
         break;
     case enum_attrib::ExposureModeToManual:
         feature = DC1394_FEATURE_EXPOSURE;
+	ret = dc1394_feature_is_present(dc_camera, feature, &isAvailable);
         break;
     case enum_attrib::ExposureModeToAutoOnce:
         feature = DC1394_FEATURE_EXPOSURE;
+	ret = dc1394_feature_is_present(dc_camera, feature, &isAvailable);
         break;
     case enum_attrib::GainModeToAuto:
         feature = DC1394_FEATURE_GAIN;
+	ret = dc1394_feature_is_present(dc_camera, feature, &isAvailable);
         break;
     case enum_attrib::GainModeToManual:
         feature = DC1394_FEATURE_GAIN;
+	ret = dc1394_feature_is_present(dc_camera, feature, &isAvailable);
         break;
-	case enum_attrib::ShutterModeToAuto:
+    case enum_attrib::SaturationToOn:
+        feature = DC1394_FEATURE_SATURATION;
+	ret = dc1394_feature_is_switchable(dc_camera, feature, &isAvailable);
+        break;
+    case enum_attrib::SaturationToOff:
+        feature = DC1394_FEATURE_SATURATION;
+	ret = dc1394_feature_is_switchable(dc_camera, feature, &isAvailable);
+        break;
+    case enum_attrib::SaturationModeToAuto:
+        feature = DC1394_FEATURE_SATURATION;
+	ret = dc1394_feature_is_present(dc_camera, feature, &isAvailable);
+        break;
+    case enum_attrib::SaturationModeToManual:
+        feature = DC1394_FEATURE_SATURATION;
+	ret = dc1394_feature_is_present(dc_camera, feature, &isAvailable);
+        break;
+    case enum_attrib::SharpnessToOn:
+        feature = DC1394_FEATURE_SHARPNESS;
+	ret = dc1394_feature_is_switchable(dc_camera, feature, &isAvailable);
+        break;
+    case enum_attrib::SharpnessToOff:
+        feature = DC1394_FEATURE_SHARPNESS;
+	ret = dc1394_feature_is_switchable(dc_camera, feature, &isAvailable);
+        break;
+    case enum_attrib::SharpnessModeToAuto:
+        feature = DC1394_FEATURE_SHARPNESS;
+	ret = dc1394_feature_is_present(dc_camera, feature, &isAvailable);
+        break;
+    case enum_attrib::SharpnessModeToManual:
+        feature = DC1394_FEATURE_SHARPNESS;
+	ret = dc1394_feature_is_present(dc_camera, feature, &isAvailable);
+        break;
+    case enum_attrib::ShutterModeToAuto:
         feature = DC1394_FEATURE_SHUTTER;
+	ret = dc1394_feature_is_present(dc_camera, feature, &isAvailable);
         break;
     case enum_attrib::ShutterModeToManual:
         feature = DC1394_FEATURE_SHUTTER;
+	ret = dc1394_feature_is_present(dc_camera, feature, &isAvailable);
+        break;
+    case enum_attrib::WhitebalToOn:
+        feature = DC1394_FEATURE_WHITE_BALANCE;
+	ret = dc1394_feature_is_switchable(dc_camera, feature, &isAvailable);
+        break;
+    case enum_attrib::WhitebalToOff:
+        feature = DC1394_FEATURE_WHITE_BALANCE;
+	ret = dc1394_feature_is_switchable(dc_camera, feature, &isAvailable);
         break;
     case enum_attrib::WhitebalModeToAuto:
         feature = DC1394_FEATURE_WHITE_BALANCE;
+	ret = dc1394_feature_is_present(dc_camera, feature, &isAvailable);
         break;
     case enum_attrib::WhitebalModeToAutoOnce:
         feature = DC1394_FEATURE_WHITE_BALANCE;
+	ret = dc1394_feature_is_present(dc_camera, feature, &isAvailable);
         break;
     case enum_attrib::WhitebalModeToManual:
         feature = DC1394_FEATURE_WHITE_BALANCE;
+	ret = dc1394_feature_is_present(dc_camera, feature, &isAvailable);
         break;
     default:
         return false;
     };
+
     
-    dc1394bool_t isPresent = DC1394_FALSE;
-    ret = dc1394_feature_is_present(dc_camera, feature, &isPresent);
     if(checkHandleError(ret))
-	return false;
+    {
+	    std::cout << "Current ENUM: " << attrib << std::endl;
+	    return false;
+    }
     
-    if (isPresent == DC1394_TRUE)
+    if (isAvailable == DC1394_TRUE)
         return true;
     else
         return false;
@@ -786,7 +854,7 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
 
     switch (attrib)
     {
-    // set the shutter time
+    // set the exposure value
     case int_attrib::ExposureValue:
 	feature = DC1394_FEATURE_EXPOSURE;
 	// For unknown reasons, when setting a value, get_value must be 
@@ -803,8 +871,26 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
 	dc1394_feature_get_value(dc_camera, feature , &current_value);
 	ret = dc1394_feature_set_value(dc_camera, feature , value);
 	break;
-	
-	// set the shutter
+
+    // set the saturation
+    case int_attrib::SaturationValue:
+	feature = DC1394_FEATURE_SATURATION;
+	// For unknown reasons, when setting a value, get_value must be 
+	// called first otherwise set_value has no effect
+	dc1394_feature_get_value(dc_camera, feature , &current_value);
+	ret = dc1394_feature_set_value(dc_camera, feature , value);
+	break;
+
+    // set the sharpness
+    case int_attrib::SharpnessValue:
+	feature = DC1394_FEATURE_SHARPNESS;
+	// For unknown reasons, when setting a value, get_value must be 
+	// called first otherwise set_value has no effect
+	dc1394_feature_get_value(dc_camera, feature , &current_value);
+	ret = dc1394_feature_set_value(dc_camera, feature , value);
+	break;
+
+    // set the shutter
     case int_attrib::ShutterValue:
 	feature = DC1394_FEATURE_SHUTTER;
 	// For unknown reasons, when setting a value, get_value must be 
@@ -1131,15 +1217,29 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
 	    // set the desired attribute/feature value
 	    result = dc1394_feature_set_power(dc_camera, feature , value);
 	    break;
+
+	// turn exposure on
+	case enum_attrib::ExposureToOn:
+	    feature = DC1394_FEATURE_EXPOSURE;
+	    value = DC1394_ON;
+	    result = dc1394_feature_set_power(dc_camera, feature, value);
+	    break;
 	    
-	// turn auto exposure on
+	// turn exposure off
+	case enum_attrib::ExposureToOff:
+	    feature = DC1394_FEATURE_EXPOSURE;
+	    value = DC1394_OFF;
+	    result = dc1394_feature_set_power(dc_camera, feature, value);
+	    break;
+
+	// set exposure to auto
 	case enum_attrib::ExposureModeToAuto:
 	    feature = DC1394_FEATURE_EXPOSURE;
 	    mode = DC1394_FEATURE_MODE_AUTO;
 	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
 	    break;
 
-	// turn auto exposure off
+	// set exposure to manual
 	case enum_attrib::ExposureModeToManual:
 	    feature = DC1394_FEATURE_EXPOSURE;
 	    mode = DC1394_FEATURE_MODE_MANUAL;
@@ -1166,6 +1266,62 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
 	    mode = DC1394_FEATURE_MODE_MANUAL;
 	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
 	    break;
+
+	// turn saturation on
+	case enum_attrib::SaturationToOn:
+	    feature = DC1394_FEATURE_SATURATION;
+	    value = DC1394_ON;
+	    result = dc1394_feature_set_power(dc_camera, feature, value);
+	    break;
+	    
+	// turn saturation off
+	case enum_attrib::SaturationToOff:
+	    feature = DC1394_FEATURE_SATURATION;
+	    value = DC1394_OFF;
+	    result = dc1394_feature_set_power(dc_camera, feature, value);
+	    break;
+
+	// turn saturation to auto
+	case enum_attrib::SaturationModeToAuto:
+	    feature = DC1394_FEATURE_SATURATION;
+	    mode = DC1394_FEATURE_MODE_AUTO;
+	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
+	    break;
+
+	// turn saturation to manual
+	case enum_attrib::SaturationModeToManual:
+	    feature = DC1394_FEATURE_SATURATION;
+	    mode = DC1394_FEATURE_MODE_MANUAL;
+	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
+	    break;
+
+	// turn sharpness on
+	case enum_attrib::SharpnessToOn:
+	    feature = DC1394_FEATURE_SHARPNESS;
+	    value = DC1394_ON;
+	    result = dc1394_feature_set_power(dc_camera, feature, value);
+	    break;
+	    
+	// turn sharpness off
+	case enum_attrib::SharpnessToOff:
+	    feature = DC1394_FEATURE_SHARPNESS;
+	    value = DC1394_OFF;
+	    result = dc1394_feature_set_power(dc_camera, feature, value);
+	    break;
+
+	// turn sharpness to auto
+	case enum_attrib::SharpnessModeToAuto:
+	    feature = DC1394_FEATURE_SHARPNESS;
+	    mode = DC1394_FEATURE_MODE_AUTO;
+	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
+	    break;
+
+	// turn sharpness to manual
+	case enum_attrib::SharpnessModeToManual:
+	    feature = DC1394_FEATURE_SHARPNESS;
+	    mode = DC1394_FEATURE_MODE_MANUAL;
+	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
+	    break;
 	    
 	// turn auto shutter time on
 	case enum_attrib::ShutterModeToAuto:
@@ -1179,6 +1335,20 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
 	    feature = DC1394_FEATURE_SHUTTER;
 	    mode = DC1394_FEATURE_MODE_MANUAL;
 	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
+	    break;
+
+	// turn whitebalance on
+	case enum_attrib::WhitebalToOn:
+	    feature = DC1394_FEATURE_WHITE_BALANCE;
+	    value = DC1394_ON;
+	    result = dc1394_feature_set_power(dc_camera, feature, value);
+	    break;
+	    
+	// turn whitebalance off
+	case enum_attrib::WhitebalToOff:
+	    feature = DC1394_FEATURE_WHITE_BALANCE;
+	    value = DC1394_OFF;
+	    result = dc1394_feature_set_power(dc_camera, feature, value);
 	    break;
 
 	// turn auto white balance on
