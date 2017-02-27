@@ -772,19 +772,27 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
     dc1394feature_t feature;
    
     dc1394error_t ret = DC1394_SUCCESS;
-    
+	
+	uint32_t current_value;
+
     switch (attrib)
     {
     // set the shutter time
     case int_attrib::ExposureValue:
         feature = DC1394_FEATURE_SHUTTER;
+		// For unknown reasons, when setting a value, get_value must be 
+		// called first otherwise set_value has no effect
+        dc1394_feature_get_value(dc_camera, feature , &current_value);
         ret = dc1394_feature_set_value(dc_camera, feature , value);
         break;
 	
     // set the gain
     case int_attrib::GainValue:
         feature = DC1394_FEATURE_GAIN;
-        ret = dc1394_feature_set_value(dc_camera, feature , value);
+		// For unknown reasons, when setting a value, get_value must be 
+		// called first otherwise set_value has no effect
+        dc1394_feature_get_value(dc_camera, feature , &current_value);
+		ret = dc1394_feature_set_value(dc_camera, feature , value);
         break;
 	
     // set the red white-balance value
@@ -909,7 +917,7 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
 	return false;
             
     return true;
-};
+}
 
 int CamFireWire::getAttrib(const int_attrib::CamAttrib attrib)
 {
