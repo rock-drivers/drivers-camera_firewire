@@ -587,10 +587,13 @@ bool CamFireWire::isAttribAvail(const int_attrib::CamAttrib attrib)
     switch (attrib)
     {
 	case int_attrib::ExposureValue:
-	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_SHUTTER, &isPresent);
+	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_EXPOSURE, &isPresent);
 	    break;
 	case int_attrib::GainValue:
 	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_GAIN, &isPresent);
+	    break;
+	case int_attrib::ShutterValue:
+	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_SHUTTER, &isPresent);
 	    break;
 	case int_attrib::WhitebalValueRed:
 	    ret = dc1394_feature_is_present(dc_camera, DC1394_FEATURE_WHITE_BALANCE, &isPresent);
@@ -724,19 +727,25 @@ bool CamFireWire::isAttribAvail(const enum_attrib::CamAttrib attrib)
         feature = DC1394_FEATURE_GAMMA;
         break;
     case enum_attrib::ExposureModeToAuto:
-        feature = DC1394_FEATURE_SHUTTER;
+        feature = DC1394_FEATURE_EXPOSURE;
         break;
     case enum_attrib::ExposureModeToManual:
-        feature = DC1394_FEATURE_SHUTTER;
+        feature = DC1394_FEATURE_EXPOSURE;
         break;
     case enum_attrib::ExposureModeToAutoOnce:
-        feature = DC1394_FEATURE_SHUTTER;
+        feature = DC1394_FEATURE_EXPOSURE;
         break;
     case enum_attrib::GainModeToAuto:
         feature = DC1394_FEATURE_GAIN;
         break;
     case enum_attrib::GainModeToManual:
         feature = DC1394_FEATURE_GAIN;
+        break;
+	case enum_attrib::ShutterModeToAuto:
+        feature = DC1394_FEATURE_SHUTTER;
+        break;
+    case enum_attrib::ShutterModeToManual:
+        feature = DC1394_FEATURE_SHUTTER;
         break;
     case enum_attrib::WhitebalModeToAuto:
         feature = DC1394_FEATURE_WHITE_BALANCE;
@@ -779,22 +788,31 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
     {
     // set the shutter time
     case int_attrib::ExposureValue:
-        feature = DC1394_FEATURE_SHUTTER;
-		// For unknown reasons, when setting a value, get_value must be 
-		// called first otherwise set_value has no effect
-        dc1394_feature_get_value(dc_camera, feature , &current_value);
-        ret = dc1394_feature_set_value(dc_camera, feature , value);
-        break;
+	feature = DC1394_FEATURE_EXPOSURE;
+	// For unknown reasons, when setting a value, get_value must be 
+	// called first otherwise set_value has no effect
+	dc1394_feature_get_value(dc_camera, feature , &current_value);
+	ret = dc1394_feature_set_value(dc_camera, feature , value);
+	break;
 	
     // set the gain
     case int_attrib::GainValue:
-        feature = DC1394_FEATURE_GAIN;
-		// For unknown reasons, when setting a value, get_value must be 
-		// called first otherwise set_value has no effect
-        dc1394_feature_get_value(dc_camera, feature , &current_value);
-		ret = dc1394_feature_set_value(dc_camera, feature , value);
-        break;
+	feature = DC1394_FEATURE_GAIN;
+	// For unknown reasons, when setting a value, get_value must be 
+	// called first otherwise set_value has no effect
+	dc1394_feature_get_value(dc_camera, feature , &current_value);
+	ret = dc1394_feature_set_value(dc_camera, feature , value);
+	break;
 	
+	// set the shutter
+    case int_attrib::ShutterValue:
+	feature = DC1394_FEATURE_SHUTTER;
+	// For unknown reasons, when setting a value, get_value must be 
+	// called first otherwise set_value has no effect
+	dc1394_feature_get_value(dc_camera, feature , &current_value);
+	ret = dc1394_feature_set_value(dc_camera, feature , value);
+	break;
+        
     // set the red white-balance value
     case int_attrib::WhitebalValueRed:
         uint32_t ub;
@@ -840,8 +858,8 @@ bool CamFireWire::setAttrib(const int_attrib::CamAttrib attrib,const int value)
 	    switch(value)
 	    {
 	    case 'B':
-	        mode = DC1394_OPERATION_MODE_1394B;
-	        break;
+		mode = DC1394_OPERATION_MODE_1394B;
+		break;
         default:
             mode = DC1394_OPERATION_MODE_LEGACY;
 	    }
@@ -932,9 +950,9 @@ int CamFireWire::getAttrib(const int_attrib::CamAttrib attrib)
 
     switch(attrib)
     {
-        // get the current exposure value (shutter open time) from the cam
+        // get the current exposure value from the cam
         case int_attrib::ExposureValue:
-            feature = DC1394_FEATURE_SHUTTER;
+            feature = DC1394_FEATURE_EXPOSURE;
             dc1394_feature_get_value(dc_camera, feature , &value);
             return (int)value;
             break;
@@ -1116,21 +1134,21 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
 	    
 	// turn auto exposure on
 	case enum_attrib::ExposureModeToAuto:
-	    feature = DC1394_FEATURE_SHUTTER;
+	    feature = DC1394_FEATURE_EXPOSURE;
 	    mode = DC1394_FEATURE_MODE_AUTO;
 	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
 	    break;
 
 	// turn auto exposure off
 	case enum_attrib::ExposureModeToManual:
-	    feature = DC1394_FEATURE_SHUTTER;
+	    feature = DC1394_FEATURE_EXPOSURE;
 	    mode = DC1394_FEATURE_MODE_MANUAL;
 	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
 	    break;
 
 	// tell camera to do a single auto-exposure and then keep the setting fixed
 	case enum_attrib::ExposureModeToAutoOnce:
-	    feature = DC1394_FEATURE_SHUTTER;
+	    feature = DC1394_FEATURE_EXPOSURE;
 	    mode = DC1394_FEATURE_MODE_ONE_PUSH_AUTO;
 	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
 	    break;
@@ -1145,6 +1163,20 @@ bool CamFireWire::setAttrib(const enum_attrib::CamAttrib attrib)
 	// turn auto gain off
 	case enum_attrib::GainModeToManual:
 	    feature = DC1394_FEATURE_GAIN;
+	    mode = DC1394_FEATURE_MODE_MANUAL;
+	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
+	    break;
+	    
+	// turn auto shutter time on
+	case enum_attrib::ShutterModeToAuto:
+	    feature = DC1394_FEATURE_SHUTTER;
+	    mode = DC1394_FEATURE_MODE_AUTO;
+	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
+	    break;
+
+	// turn auto shutter time off
+	case enum_attrib::ShutterModeToManual:
+	    feature = DC1394_FEATURE_SHUTTER;
 	    mode = DC1394_FEATURE_MODE_MANUAL;
 	    result = dc1394_feature_set_mode(dc_camera, feature, mode);
 	    break;
